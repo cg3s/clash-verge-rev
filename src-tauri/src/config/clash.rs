@@ -64,7 +64,7 @@ impl IClashTemp {
                 "tauri://localhost",
                 "http://tauri.localhost",
                 // Only enable this in dev mode
-                #[cfg(feature = "verge-dev")]
+                #[cfg(feature = "max-dev")]
                 "http://localhost:3000",
                 "https://yacd.metacubex.one",
                 "https://metacubex.github.io",
@@ -106,7 +106,7 @@ impl IClashTemp {
                 "tauri://localhost",
                 "http://tauri.localhost",
                 // Only enable this in dev mode
-                #[cfg(feature = "verge-dev")]
+                #[cfg(feature = "max-dev")]
                 "http://localhost:3000",
                 "https://yacd.metacubex.one",
                 "https://metacubex.github.io",
