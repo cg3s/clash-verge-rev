@@ -26,7 +26,7 @@ const container = document.getElementById(mainElementId);
 
 if (!container) {
   throw new Error(
-    `No container '${mainElementId}' found to render application`
+    `No container '${mainElementId}' found to render application`,
   );
 }
 
@@ -37,7 +37,7 @@ document.addEventListener("keydown", (event) => {
     (event.altKey && ["ArrowLeft", "ArrowRight"].includes(event.key)) ||
     ((event.ctrlKey || event.metaKey) &&
       ["F", "G", "H", "J", "P", "Q", "R", "U"].includes(
-        event.key.toUpperCase()
+        event.key.toUpperCase(),
       ));
   disabledShortcuts && event.preventDefault();
 });
@@ -48,7 +48,8 @@ const contexts = [
   <UpdateStateProvider />,
 ];
 
-createRoot(container).render(
+const root = createRoot(container);
+root.render(
   <React.StrictMode>
     <ComposeContextProvider contexts={contexts}>
       <BaseErrorBoundary>
@@ -59,5 +60,14 @@ createRoot(container).render(
         </AppDataProvider>
       </BaseErrorBoundary>
     </ComposeContextProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
+
+// 错误处理
+window.addEventListener("error", (event) => {
+  console.error("[main.tsx] 全局错误:", event.error);
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  console.error("[main.tsx] 未处理的Promise拒绝:", event.reason);
+});

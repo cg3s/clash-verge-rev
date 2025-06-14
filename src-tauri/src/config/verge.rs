@@ -88,6 +88,9 @@ pub struct IVerge {
     /// pac script content
     pub pac_file_content: Option<String>,
 
+    /// proxy host address
+    pub proxy_host: Option<String>,
+
     /// theme setting
     pub theme_setting: Option<IVergeTheme>,
 
@@ -131,7 +134,7 @@ pub struct IVerge {
     pub test_list: Option<Vec<IVergeTestItem>>,
 
     /// 日志清理
-    /// 0: 不清理; 1: 7天; 2: 30天; 3: 90天
+    /// 0: 不清理; 1: 1天；2: 7天; 3: 30天; 4: 90天
     pub auto_log_clean: Option<i32>,
 
     /// 是否启用随机端口
@@ -196,6 +199,9 @@ pub struct IVerge {
 
     /// 自动进入轻量模式的延迟（分钟）
     pub auto_light_weight_minutes: Option<u64>,
+
+    /// 启用代理页面自动滚动
+    pub enable_hover_jump_navigator: Option<bool>,
 
     /// 服务状态跟踪
     pub service_state: Option<crate::core::service::ServiceState>,
@@ -272,9 +278,11 @@ impl IVerge {
             tun_tray_icon: Some(false),
             enable_auto_launch: Some(false),
             enable_silent_start: Some(false),
+            enable_hover_jump_navigator: Some(true),
             enable_system_proxy: Some(false),
             proxy_auto_config: Some(false),
             pac_file_content: Some(DEFAULT_PAC.into()),
+            proxy_host: Some("127.0.0.1".into()),
             enable_random_port: Some(false),
             #[cfg(not(target_os = "windows"))]
             verge_redir_port: Some(7895),
@@ -299,12 +307,12 @@ impl IVerge {
             webdav_url: None,
             webdav_username: None,
             webdav_password: None,
-            enable_tray_speed: Some(true),
+            enable_tray_speed: Some(false),
             enable_tray_icon: Some(true),
             enable_global_hotkey: Some(true),
             enable_auto_light_weight_mode: Some(false),
             auto_light_weight_minutes: Some(10),
-            enable_dns_settings: Some(true),
+            enable_dns_settings: Some(false),
             home_cards: None,
             service_state: None,
             ..Self::default()
@@ -347,6 +355,7 @@ impl IVerge {
         patch!(enable_tun_mode);
         patch!(enable_auto_launch);
         patch!(enable_silent_start);
+        patch!(enable_hover_jump_navigator);
         patch!(enable_random_port);
         #[cfg(not(target_os = "windows"))]
         patch!(verge_redir_port);
@@ -368,7 +377,7 @@ impl IVerge {
         patch!(proxy_guard_duration);
         patch!(proxy_auto_config);
         patch!(pac_file_content);
-
+        patch!(proxy_host);
         patch!(theme_setting);
         patch!(web_ui_list);
         patch!(clash_core);
@@ -401,7 +410,7 @@ impl IVerge {
         #[cfg(not(feature = "max-dev"))]
         const SERVER_PORT: u16 = 33331;
         #[cfg(feature = "max-dev")]
-        const SERVER_PORT: u16 = 11233;
+        const SERVER_PORT: u16 = 11234;
         SERVER_PORT
     }
 
@@ -452,6 +461,7 @@ pub struct IVergeResponse {
     pub proxy_guard_duration: Option<u64>,
     pub proxy_auto_config: Option<bool>,
     pub pac_file_content: Option<String>,
+    pub proxy_host: Option<String>,
     pub theme_setting: Option<IVergeTheme>,
     pub web_ui_list: Option<Vec<String>>,
     pub clash_core: Option<String>,
@@ -487,6 +497,7 @@ pub struct IVergeResponse {
     pub auto_light_weight_minutes: Option<u64>,
     pub enable_dns_settings: Option<bool>,
     pub home_cards: Option<serde_json::Value>,
+    pub enable_hover_jump_navigator: Option<bool>,
     pub service_state: Option<crate::core::service::ServiceState>,
 }
 
@@ -520,6 +531,7 @@ impl From<IVerge> for IVergeResponse {
             proxy_guard_duration: verge.proxy_guard_duration,
             proxy_auto_config: verge.proxy_auto_config,
             pac_file_content: verge.pac_file_content,
+            proxy_host: verge.proxy_host,
             theme_setting: verge.theme_setting,
             web_ui_list: verge.web_ui_list,
             clash_core: verge.clash_core,
@@ -555,6 +567,7 @@ impl From<IVerge> for IVergeResponse {
             auto_light_weight_minutes: verge.auto_light_weight_minutes,
             enable_dns_settings: verge.enable_dns_settings,
             home_cards: verge.home_cards,
+            enable_hover_jump_navigator: verge.enable_hover_jump_navigator,
             service_state: verge.service_state,
         }
     }

@@ -9,8 +9,7 @@ import {
   PauseCircleOutlineRounded,
   CleaningServicesOutlined
 } from "@mui/icons-material";
-
-import { LogLevel, clearLogs } from "@/hooks/use-log-data";
+import { LogLevel } from "@/hooks/use-log-data";
 import { useClashInfo } from "@/hooks/use-clash";
 import { useEnableLog } from "@/services/states";
 import { BaseEmpty, BasePage } from "@/components/base";
@@ -82,6 +81,19 @@ const LogPage = () => {
       }}
       header={
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <IconButton
+            title={t(enableLog ? "Pause" : "Resume")}
+            size="small"
+            color="inherit"
+            onClick={handleToggleLog}
+          >
+            {enableLog ? (
+              <PauseCircleOutlineRounded />
+            ) : (
+              <PlayCircleOutlineRounded />
+            )}
+          </IconButton>
+
           {enableLog === true && (
             <Button
               size="small"
@@ -118,7 +130,7 @@ const LogPage = () => {
           pt: 1,
           mb: 0.5,
           mx: "10px",
-          height: "36px",
+          height: "39px",
           display: "flex",
           alignItems: "center",
         }}

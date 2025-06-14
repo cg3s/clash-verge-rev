@@ -11,7 +11,8 @@ import {
   Box,
 } from "@mui/material";
 import { useVerge } from "@/hooks/use-verge";
-import { BaseDialog, DialogRef, Notice, Switch } from "@/components/base";
+import { BaseDialog, DialogRef, Switch } from "@/components/base";
+import { TooltipIcon } from "@/components/base/base-tooltip-icon";
 import { GuardState } from "./guard-state";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { convertFileSrc } from "@tauri-apps/api/core";
@@ -19,6 +20,7 @@ import { copyIconFile, getAppDir } from "@/services/cmds";
 import { join } from "@tauri-apps/api/path";
 import { exists } from "@tauri-apps/plugin-fs";
 import getSystem from "@/utils/get-system";
+import { showNotice } from "@/services/noticeService";
 
 const OS = getSystem();
 
@@ -87,7 +89,7 @@ export const LayoutViewer = forwardRef<DialogRef>((props, ref) => {
 
   const onSwitchFormat = (_e: any, value: boolean) => value;
   const onError = (err: any) => {
-    Notice.error(err.message || err.toString());
+    showNotice("error", err.message || err.toString());
   };
   const onChangeData = (patch: Partial<IVergeConfig>) => {
     mutateVerge({ ...verge, ...patch }, false);
@@ -147,6 +149,30 @@ export const LayoutViewer = forwardRef<DialogRef>((props, ref) => {
         </Item>
 
         <Item>
+          <ListItemText
+            primary={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <span>{t("Hover Jump Navigator")}</span>
+                <TooltipIcon
+                  title={t("Hover Jump Navigator Info")}
+                  sx={{ opacity: "0.7" }}
+                />
+              </Box>
+            }
+          />
+          <GuardState
+            value={verge?.enable_hover_jump_navigator ?? true}
+            valueProps="checked"
+            onCatch={onError}
+            onFormat={onSwitchFormat}
+            onChange={(e) => onChangeData({ enable_hover_jump_navigator: e })}
+            onGuard={(e) => patchVerge({ enable_hover_jump_navigator: e })}
+          >
+            <Switch edge="end" />
+          </GuardState>
+        </Item>
+
+        <Item>
           <ListItemText primary={t("Nav Icon")} />
           <GuardState
             value={verge?.menu_icon ?? "monochrome"}
@@ -187,7 +213,7 @@ export const LayoutViewer = forwardRef<DialogRef>((props, ref) => {
           <Item>
             <ListItemText primary={t("Enable Tray Speed")} />
             <GuardState
-              value={verge?.enable_tray_speed ?? true}
+              value={verge?.enable_tray_speed ?? false}
               valueProps="checked"
               onCatch={onError}
               onFormat={onSwitchFormat}

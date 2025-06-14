@@ -1,16 +1,83 @@
-use anyhow::{Context, Result};
-use delay_timer::prelude::TaskBuilder;
-use tauri::{Listener, Manager};
-
 use crate::{
     config::Config,
     core::{handle, timer::Timer},
-    log_err, logging, logging_error,
+    log_err, logging,
+    state::lightweight::LightWeightState,
     utils::logging::Type,
-    AppHandleManager,
 };
 
+#[cfg(target_os = "macos")]
+use crate::logging_error;
+#[cfg(target_os = "macos")]
+use crate::AppHandleManager;
+
+use anyhow::{Context, Result};
+use delay_timer::prelude::TaskBuilder;
+use std::sync::Mutex;
+use tauri::{Listener, Manager};
+
 const LIGHT_WEIGHT_TASK_UID: &str = "light_weight_task";
+
+fn with_lightweight_status<F, R>(f: F) -> R
+where
+    F: FnOnce(&mut LightWeightState) -> R,
+{
+    let app_handle = handle::Handle::global().app_handle().unwrap();
+    let state = app_handle.state::<Mutex<LightWeightState>>();
+    let mut guard = state.lock().unwrap();
+    f(&mut guard)
+}
+
+pub fn run_once_auto_lightweight() {
+    LightWeightState::default().run_once_time(|| {
+        let is_silent_start = Config::verge().data().enable_silent_start.unwrap_or(false);
+        let enable_auto = Config::verge()
+            .data()
+            .enable_auto_light_weight_mode
+            .unwrap_or(false);
+        if enable_auto && is_silent_start {
+            logging!(
+                info,
+                Type::Lightweight,
+                true,
+                "Add timer listener when creating window in silent start mode"
+            );
+            set_lightweight_mode(true);
+            enable_auto_light_weight_mode();
+        }
+    });
+}
+
+pub fn auto_lightweight_mode_init() {
+    if let Some(app_handle) = handle::Handle::global().app_handle() {
+        // 通过 app_handle.state 保证同步
+        let _ = app_handle.state::<Mutex<LightWeightState>>();
+        let is_silent_start = { Config::verge().data().enable_silent_start }.unwrap_or(false);
+        let enable_auto = { Config::verge().data().enable_auto_light_weight_mode }.unwrap_or(false);
+        if enable_auto && !is_silent_start {
+            logging!(
+                info,
+                Type::Lightweight,
+                true,
+                "Add timer listener when creating window normally"
+            );
+            set_lightweight_mode(true);
+            enable_auto_light_weight_mode();
+        }
+    }
+}
+
+// 检查是否处于轻量模式
+pub fn is_in_lightweight_mode() -> bool {
+    with_lightweight_status(|state| state.is_lightweight)
+}
+
+// 设置轻量模式状态
+fn set_lightweight_mode(value: bool) {
+    with_lightweight_status(|state| {
+        state.set_lightweight_mode(value);
+    });
+}
 
 pub fn enable_auto_light_weight_mode() {
     Timer::global().init().unwrap();
@@ -37,9 +104,26 @@ pub fn entry_lightweight_mode() {
         AppHandleManager::global().set_activation_policy_accessory();
         logging!(info, Type::Lightweight, true, "轻量模式已开启");
     }
+    set_lightweight_mode(true);
     let _ = cancel_light_weight_timer();
 }
 
+// 添加从轻量模式恢复的函数
+pub fn exit_lightweight_mode() {
+    // 确保当前确实处于轻量模式才执行退出操作
+    if !is_in_lightweight_mode() {
+        logging!(info, Type::Lightweight, true, "当前不在轻量模式，无需退出");
+        return;
+    }
+
+    set_lightweight_mode(false);
+    logging!(info, Type::Lightweight, true, "正在退出轻量模式");
+
+    // 重置UI就绪状态
+    crate::utils::resolve::reset_ui_ready();
+}
+
+#[cfg(target_os = "macos")]
 pub fn add_light_weight_timer() {
     logging_error!(Type::Lightweight, setup_light_weight_timer());
 }

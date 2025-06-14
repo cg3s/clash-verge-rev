@@ -13,8 +13,8 @@ import {
   FormControlLabel,
   Checkbox,
   Tooltip,
+  Grid,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { useVerge } from "@/hooks/use-verge";
 import { useProfiles } from "@/hooks/use-profiles";
 import {
@@ -38,6 +38,7 @@ import { ClashInfoCard } from "@/components/home/clash-info-card";
 import { SystemInfoCard } from "@/components/home/system-info-card";
 import { useLockFn } from "ahooks";
 import {
+  entry_lightweight_mode,
   openWebUrl,
   patchVergeConfig,
 } from "@/services/cmds";
@@ -251,9 +252,13 @@ export const HomePage = () => {
     setSettingsOpen(true);
   };
 
-  // 新增：保存设置
+  // 新增：保存设置时用requestIdleCallback/setTimeout
   const handleSaveSettings = (newCards: HomeCardsSettings) => {
-    setHomeCards(newCards);
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(() => setHomeCards(newCards));
+    } else {
+      setTimeout(() => setHomeCards(newCards), 0);
+    }
   };
 
   return (
@@ -262,6 +267,15 @@ export const HomePage = () => {
       contentStyle={{ padding: 2 }}
       header={
         <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Tooltip title={t("LightWeight Mode")} arrow>
+            <IconButton
+              onClick={async () => await entry_lightweight_mode()}
+              size="small"
+              color="inherit"
+            >
+              <HistoryEduOutlined />
+            </IconButton>
+          </Tooltip>
           <Tooltip title={t("Manual")} arrow>
             <IconButton onClick={toSiteDoc} size="small" color="inherit">
               <HelpOutlineRounded />

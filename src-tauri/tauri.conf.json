@@ -1,5 +1,5 @@
 {
-  "version": "2.2.3",
+  "version": "2.3.0",
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "bundle": {
     "active": true,
@@ -11,15 +11,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": [
-      "resources",
-      "resources/locales/*"
-    ],
+    "resources": ["resources", "resources/locales/*"],
     "publisher": "Cg3s, Inc",
-    "externalBin": [
-      "sidecar/max-mihomo",
-      "sidecar/max-mihomo-alpha"
-    ],
+    "externalBin": ["sidecar/max-mihomo", "sidecar/max-mihomo-alpha"],
     "copyright": "GNU General Public License v3.0",
     "category": "DeveloperTool",
     "shortDescription": "Clash Max",
@@ -29,7 +23,7 @@
     "beforeBuildCommand": "pnpm run web:build",
     "frontendDist": "../dist",
     "beforeDevCommand": "pnpm run web:dev",
-    "devUrl": "http://localhost:3001/"
+    "devUrl": "http://localhost:3000/"
   },
   "productName": "Clash Max",
   "identifier": "cg3s.clash-max",
@@ -50,25 +44,15 @@
     },
     "deep-link": {
       "desktop": {
-        "schemes": [
-          "clash",
-          "clash-max"
-        ]
+        "schemes": ["clash", "clash-max"]
       }
     }
   },
   "app": {
     "security": {
-      "capabilities": [
-        "desktop-capability",
-        "migrated"
-      ],
+      "capabilities": ["desktop-capability", "migrated"],
       "assetProtocol": {
-        "scope": [
-          "$APPDATA/**",
-          "$RESOURCE/../**",
-          "**"
-        ],
+        "scope": ["$APPDATA/**", "$RESOURCE/../**", "**"],
         "enable": true
       },
       "csp": null
