@@ -427,7 +427,7 @@ Function .onInit
   !endif
 FunctionEnd
 
-!macro CheckAllVergeProcesses
+!macro CheckAllMaxProcesses
   ; Check if clash-max-service.exe is running
   !if "${INSTALLMODE}" == "currentUser"
     nsis_tauri_utils::FindProcessCurrentUser "clash-max-service.exe"
@@ -920,8 +920,8 @@ FunctionEnd
 Section Uninstall
 
   !insertmacro CheckIfAppIsRunning
-  !insertmacro CheckAllVergeProcesses
-  !insertmacro RemoveVergeService
+  !insertmacro CheckAllMaxProcesses
+  !insertmacro RemoveMaxService
 
   ; 删除 window-state.json 文件 .window-state.json 文件
   DetailPrint "开始删除删除 window-state.json or .window-state.json"
