@@ -1,10 +1,7 @@
+use crate::utils::notification::{notify_event, NotificationEvent};
 use crate::{
-    config::Config,
-    core::handle,
-    feat, logging, logging_error,
-    module::lightweight::entry_lightweight_mode,
-    process::AsyncHandler,
-    utils::{logging::Type, resolve},
+    config::Config, core::handle, feat, logging, logging_error,
+    module::lightweight::entry_lightweight_mode, utils::logging::Type,
 };
 use anyhow::{bail, Result};
 use once_cell::sync::OnceCell;
@@ -14,7 +11,7 @@ use tauri::Manager;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, ShortcutState};
 
 pub struct Hotkey {
-    current: Arc<Mutex<Vec<String>>>, // 保存当前的热键设置
+    current: Arc<Mutex<Vec<String>>>,
 }
 
 impl Hotkey {
@@ -28,7 +25,7 @@ impl Hotkey {
 
     pub fn init(&self) -> Result<()> {
         let verge = Config::verge();
-        let enable_global_hotkey = verge.latest().enable_global_hotkey.unwrap_or(true);
+        let enable_global_hotkey = verge.latest_ref().enable_global_hotkey.unwrap_or(true);
 
         logging!(
             debug,
@@ -38,12 +35,11 @@ impl Hotkey {
             enable_global_hotkey
         );
 
-        // 如果全局热键被禁用，则不注册热键
         if !enable_global_hotkey {
             return Ok(());
         }
 
-        if let Some(hotkeys) = verge.latest().hotkeys.as_ref() {
+        if let Some(hotkeys) = verge.latest_ref().hotkeys.as_ref() {
             logging!(
                 debug,
                 Type::Hotkey,
@@ -138,14 +134,11 @@ impl Hotkey {
             manager.unregister(hotkey)?;
         }
 
-        let f = match func.trim() {
+        let app_handle_clone = app_handle.clone();
+        let f: Box<dyn Fn() + Send + Sync> = match func.trim() {
             "open_or_close_dashboard" => {
-                logging!(
-                    debug,
-                    Type::Hotkey,
-                    "Registering open_or_close_dashboard function"
-                );
-                || {
+                let app_handle = app_handle_clone.clone();
+                Box::new(move || {
                     logging!(
                         debug,
                         Type::Hotkey,
@@ -153,84 +146,89 @@ impl Hotkey {
                         "=== Hotkey Dashboard Window Operation Start ==="
                     );
 
-                    // 使用异步操作避免阻塞
-                    AsyncHandler::spawn(move || async move {
-                        logging!(
-                            debug,
-                            Type::Hotkey,
-                            true,
-                            "Toggle dashboard window visibility"
-                        );
+                    logging!(
+                        info,
+                        Type::Hotkey,
+                        true,
+                        "Using unified WindowManager for hotkey operation (bypass debounce)"
+                    );
 
-                        // 检查窗口是否存在
-                        if let Some(window) = handle::Handle::global().get_window() {
-                            // 如果窗口可见，则隐藏
-                            match window.is_visible() {
-                                Ok(visible) => {
-                                    if visible {
-                                        logging!(
-                                            info,
-                                            Type::Window,
-                                            true,
-                                            "Window is visible, hiding it"
-                                        );
-                                        let _ = window.hide();
-                                    } else {
-                                        // 如果窗口不可见，则显示
-                                        logging!(
-                                            info,
-                                            Type::Window,
-                                            true,
-                                            "Window is hidden, showing it"
-                                        );
-                                        if window.is_minimized().unwrap_or(false) {
-                                            let _ = window.unminimize();
-                                        }
-                                        let _ = window.show();
-                                        let _ = window.set_focus();
-                                    }
-                                }
-                                Err(e) => {
-                                    logging!(
-                                        warn,
-                                        Type::Window,
-                                        true,
-                                        "Failed to check window visibility: {}",
-                                        e
-                                    );
-                                    let _ = window.show();
-                                    let _ = window.set_focus();
-                                }
-                            }
-                        } else {
-                            // 如果窗口不存在，创建一个新窗口
-                            logging!(
-                                info,
-                                Type::Window,
-                                true,
-                                "Window does not exist, creating a new one"
-                            );
-                            resolve::create_window(true);
-                        }
-                    });
+                    crate::feat::open_or_close_dashboard_hotkey();
 
                     logging!(
                         debug,
                         Type::Hotkey,
                         "=== Hotkey Dashboard Window Operation End ==="
                     );
-                }
+                    notify_event(&app_handle, NotificationEvent::DashboardToggled);
+                })
             }
-            "clash_mode_rule" => || feat::change_clash_mode("rule".into()),
-            "clash_mode_global" => || feat::change_clash_mode("global".into()),
-            "clash_mode_direct" => || feat::change_clash_mode("direct".into()),
-            "toggle_system_proxy" => || feat::toggle_system_proxy(),
-            "toggle_tun_mode" => || feat::toggle_tun_mode(None),
-            "entry_lightweight_mode" => || entry_lightweight_mode(),
-            "quit" => || feat::quit(),
+            "clash_mode_rule" => {
+                let app_handle = app_handle_clone.clone();
+                Box::new(move || {
+                    feat::change_clash_mode("rule".into());
+                    notify_event(
+                        &app_handle,
+                        NotificationEvent::ClashModeChanged { mode: "Rule" },
+                    );
+                })
+            }
+            "clash_mode_global" => {
+                let app_handle = app_handle_clone.clone();
+                Box::new(move || {
+                    feat::change_clash_mode("global".into());
+                    notify_event(
+                        &app_handle,
+                        NotificationEvent::ClashModeChanged { mode: "Global" },
+                    );
+                })
+            }
+            "clash_mode_direct" => {
+                let app_handle = app_handle_clone.clone();
+                Box::new(move || {
+                    feat::change_clash_mode("direct".into());
+                    notify_event(
+                        &app_handle,
+                        NotificationEvent::ClashModeChanged { mode: "Direct" },
+                    );
+                })
+            }
+            "toggle_system_proxy" => {
+                let app_handle = app_handle_clone.clone();
+                Box::new(move || {
+                    feat::toggle_system_proxy();
+                    notify_event(&app_handle, NotificationEvent::SystemProxyToggled);
+                })
+            }
+            "toggle_tun_mode" => {
+                let app_handle = app_handle_clone.clone();
+                Box::new(move || {
+                    feat::toggle_tun_mode(None);
+                    notify_event(&app_handle, NotificationEvent::TunModeToggled);
+                })
+            }
+            "entry_lightweight_mode" => {
+                let app_handle = app_handle_clone.clone();
+                Box::new(move || {
+                    entry_lightweight_mode();
+                    notify_event(&app_handle, NotificationEvent::LightweightModeEntered);
+                })
+            }
+            "quit" => {
+                let app_handle = app_handle_clone.clone();
+                Box::new(move || {
+                    feat::quit();
+                    notify_event(&app_handle, NotificationEvent::AppQuit);
+                })
+            }
             #[cfg(target_os = "macos")]
-            "hide" => || feat::hide(),
-
+            "hide" => {
+                let app_handle = app_handle_clone.clone();
+                Box::new(move || {
+                    feat::hide();
+                    notify_event(&app_handle, NotificationEvent::AppHidden);
+                })
+            }
             _ => {
                 logging!(error, Type::Hotkey, "Invalid function: {}", func);
                 bail!("invalid function \"{func}\"");
@@ -251,21 +249,19 @@ impl Hotkey {
                         }
                     }
                 } else {
-                    // 直接执行函数，不做任何状态检查
                     logging!(debug, Type::Hotkey, "Executing function directly");
 
-                    // 获取全局热键状态
                     let is_enable_global_hotkey = Config::verge()
-                        .latest()
+                        .latest_ref()
                         .enable_global_hotkey
                         .unwrap_or(true);
 
                     if is_enable_global_hotkey {
                         f();
-                    } else if let Some(window) = app_handle.get_webview_window("main") {
-                        // 非轻量模式且未启用全局热键时，只在窗口可见且有焦点的情况下响应热键
-                        let is_visible = window.is_visible().unwrap_or(false);
-                        let is_focused = window.is_focused().unwrap_or(false);
+                    } else {
+                        use crate::utils::window_manager::WindowManager;
+                        let is_visible = WindowManager::is_main_window_visible();
+                        let is_focused = WindowManager::is_main_window_focused();
 
                         if is_focused && is_visible {
                             f();
@@ -320,9 +316,9 @@ impl Hotkey {
             let func = iter.next();
             let key = iter.next();
 
-            if func.is_some() && key.is_some() {
-                let func = func.unwrap().trim();
-                let key = key.unwrap().trim();
+            if let (Some(func), Some(key)) = (func, key) {
+                let func = func.trim();
+                let key = key.trim();
                 map.insert(key, func);
             }
         });

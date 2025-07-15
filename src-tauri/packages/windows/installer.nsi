@@ -509,22 +509,22 @@ FunctionEnd
   ${EndIf}
 !macroend
 
-!macro StartVergeService
+!macro StartMaxService
   ; Check if the service exists
-  SimpleSC::ExistsService "clash_verge_service"
+  SimpleSC::ExistsService "clash_max_service"
   Pop $0  ; 0：service exists；other: service not exists
   ; Service exists
   ${If} $0 == 0
     Push $0
     ; Check if the service is running
-    SimpleSC::ServiceIsRunning "clash_verge_service"
+    SimpleSC::ServiceIsRunning "clash_max_service"
     Pop $0 ; returns an errorcode (<>0) otherwise success (0)
     Pop $1 ; returns 1 (service is running) - returns 0 (service is not running)
     ${If} $0 == 0
       Push $0
       ${If} $1 == 0
             DetailPrint "Restart Clash Max Service..."
-            SimpleSC::StartService "clash_verge_service" "" 30
+            SimpleSC::StartService "clash_max_service" "" 30
       ${EndIf}
     ${ElseIf} $0 != 0
           Push $0
@@ -535,26 +535,26 @@ FunctionEnd
   ${EndIf}
 !macroend
 
-!macro RemoveVergeService
+!macro RemoveMaxService
   ; Check if the service exists
-  SimpleSC::ExistsService "clash_verge_service"
+  SimpleSC::ExistsService "clash_max_service"
   Pop $0  ; 0：service exists；other: service not exists
   ; Service exists
   ${If} $0 == 0
     Push $0
     ; Check if the service is running
-    SimpleSC::ServiceIsRunning "clash_verge_service"
+    SimpleSC::ServiceIsRunning "clash_max_service"
     Pop $0 ; returns an errorcode (<>0) otherwise success (0)
     Pop $1 ; returns 1 (service is running) - returns 0 (service is not running)
     ${If} $0 == 0
       Push $0
       ${If} $1 == 1
         DetailPrint "Stop Clash Max Service..."
-        SimpleSC::StopService "clash_verge_service" 1 30
+        SimpleSC::StopService "clash_max_service" 1 30
         Pop $0 ; returns an errorcode (<>0) otherwise success (0)
         ${If} $0 == 0
               DetailPrint "Removing Clash Max Service..."
-              SimpleSC::RemoveService "clash_verge_service"
+              SimpleSC::RemoveService "clash_max_service"
         ${ElseIf} $0 != 0
                   Push $0
                   SimpleSC::GetErrorMessage
@@ -563,7 +563,7 @@ FunctionEnd
         ${EndIf}
   ${ElseIf} $1 == 0
         DetailPrint "Removing Clash Max Service..."
-        SimpleSC::RemoveService "clash_verge_service"
+        SimpleSC::RemoveService "clash_max_service"
   ${EndIf}
     ${ElseIf} $0 != 0
           Push $0
@@ -691,8 +691,6 @@ SectionEnd
   app_check_done:
 !macroend
 
-
-
 Var VC_REDIST_URL
 Var VC_REDIST_EXE
 
@@ -701,25 +699,25 @@ Section CheckAndInstallVSRuntime
     ${If} ${IsNativeARM64}
         StrCpy $VC_REDIST_URL "https://aka.ms/vs/17/release/vc_redist.arm64.exe"
         StrCpy $VC_REDIST_EXE "vc_redist.arm64.exe"
-        
+
         ; 检查关键DLL
         IfFileExists "$SYSDIR\vcruntime140.dll" 0 checkInstall
         IfFileExists "$SYSDIR\msvcp140.dll" Done checkInstall
-        
+
     ${ElseIf} ${RunningX64}
         StrCpy $VC_REDIST_URL "https://aka.ms/vs/17/release/vc_redist.x64.exe"
         StrCpy $VC_REDIST_EXE "vc_redist.x64.exe"
-        
+
         ; 检查关键DLL
         IfFileExists "$SYSDIR\vcruntime140.dll" 0 checkInstall
         IfFileExists "$SYSDIR\msvcp140.dll" Done checkInstall
-        
+
     ${Else}
         StrCpy $VC_REDIST_URL "https://aka.ms/vs/17/release/vc_redist.x86.exe"
         StrCpy $VC_REDIST_EXE "vc_redist.x86.exe"
-        
+
         ; 检查关键DLL
-        IfFileExists "$SYSDIR\vcruntime140.dll" 0 checkInstall  
+        IfFileExists "$SYSDIR\vcruntime140.dll" 0 checkInstall
         IfFileExists "$SYSDIR\msvcp140.dll" Done checkInstall
     ${EndIf}
 
@@ -754,11 +752,9 @@ Section CheckAndInstallVSRuntime
     ${Else}
         DetailPrint "Visual C++ Redistributable 下载失败"
     ${EndIf}
-    
+
     Done:
 SectionEnd
-
-
 
 Section Install
   SetOutPath $INSTDIR
@@ -766,19 +762,25 @@ Section Install
   !insertmacro CheckIfAppIsRunning
   !insertmacro CheckAllVergeProcesses
 
+  ; 删除 window-state.json 文件 .window-state.json 文件
+  DetailPrint "开始删除删除 window-state.json or .window-state.json"
+  SetShellVarContext current
+  Delete "$APPDATA\cg3s.clash-max\window-state.json"
+  Delete "$APPDATA\cg3s.clash-max\.window-state.json"
+
   ; 清理自启动注册表项
   DetailPrint "Cleaning auto-launch registry entries..."
 
   StrCpy $R1 "Software\Microsoft\Windows\CurrentVersion\Run"
-  
-  SetRegView 64  
-  ; 清理旧版本的注册表项 (Clash Max)
-  ReadRegStr $R2 HKCU "$R1" "Clash Max"
+
+  SetRegView 64
+  ; 清理旧版本的注册表项 (Clash Verge)
+  ReadRegStr $R2 HKCU "$R1" "Clash Verge"
   ${If} $R2 != ""
     DeleteRegValue HKCU "$R1" "Clash Max"
   ${EndIf}
-  
-  ReadRegStr $R2 HKLM "$R1" "Clash Max"
+
+  ReadRegStr $R2 HKLM "$R1" "Clash Verge"
   ${If} $R2 != ""
     DeleteRegValue HKLM "$R1" "Clash Max"
   ${EndIf}
@@ -788,7 +790,7 @@ Section Install
   ${If} $R2 != ""
     DeleteRegValue HKCU "$R1" "clash-max"
   ${EndIf}
-  
+
   ReadRegStr $R2 HKLM "$R1" "clash-max"
   ${If} $R2 != ""
     DeleteRegValue HKLM "$R1" "clash-max"
@@ -798,7 +800,7 @@ Section Install
     ; Delete clash-max.desktop
   IfFileExists "$INSTDIR\Clash Max.exe" 0 +2
     Delete "$INSTDIR\Clash Max.exe"
-  
+
   ; Copy main executable
   File "${MAINBINARYSRCPATH}"
 
@@ -916,26 +918,29 @@ FunctionEnd
 !macroend
 
 Section Uninstall
-  ;删除 .window-state.json 文件
-  SetShellVarContext current
-  Delete "$APPDATA\io.github.cg3s.clash-max\.window-state.json"
 
   !insertmacro CheckIfAppIsRunning
   !insertmacro CheckAllVergeProcesses
   !insertmacro RemoveVergeService
 
+  ; 删除 window-state.json 文件 .window-state.json 文件
+  DetailPrint "开始删除删除 window-state.json or .window-state.json"
+  SetShellVarContext current
+  Delete "$APPDATA\cg3s.clash-max\window-state.json"
+  Delete "$APPDATA\cg3s.clash-max\.window-state.json"
+
   ; 清理自启动注册表项
   DetailPrint "Cleaning auto-launch registry entries..."
-  
+
   StrCpy $R1 "Software\Microsoft\Windows\CurrentVersion\Run"
-  
+
   SetRegView 64
   ; 清理旧版本的注册表项 (Clash Max)
   ReadRegStr $R2 HKCU "$R1" "Clash Max"
   ${If} $R2 != ""
     DeleteRegValue HKCU "$R1" "Clash Max"
   ${EndIf}
-  
+
   ReadRegStr $R2 HKLM "$R1" "Clash Max"
   ${If} $R2 != ""
     DeleteRegValue HKLM "$R1" "Clash Max"
@@ -946,7 +951,7 @@ Section Uninstall
   ${If} $R2 != ""
     DeleteRegValue HKCU "$R1" "clash-max"
   ${EndIf}
-  
+
   ReadRegStr $R2 HKLM "$R1" "clash-max"
   ${If} $R2 != ""
     DeleteRegValue HKLM "$R1" "clash-max"
@@ -978,24 +983,144 @@ Section Uninstall
   {{/each}}
   RMDir "$INSTDIR"
 
+  ; 删除固定栏
   !insertmacro DeleteAppUserModelId
   !insertmacro UnpinShortcut "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
   !insertmacro UnpinShortcut "$DESKTOP\${PRODUCTNAME}.lnk"
-  ; 兼容旧名称快捷方式
-  !insertmacro UnpinShortcut "$SMPROGRAMS\$AppStartMenuFolder\clash-max.lnk"
-  !insertmacro UnpinShortcut "$DESKTOP\clash-max.lnk"
+  !insertmacro UnpinShortcut "$SMPROGRAMS\$AppStartMenuFolder\${MAINBINARYNAME}.lnk"
+  !insertmacro UnpinShortcut "$DESKTOP\${MAINBINARYNAME}.lnk"
 
-  ; Remove start menu shortcut
-  !insertmacro MUI_STARTMENU_GETFOLDER Application $AppStartMenuFolder
+  ; 删除所有用户的桌面快捷方式
+  DetailPrint "开始删除所有用户桌面的 Clash Verge 快捷方式..."
+
+  ; 删除公共桌面快捷方式
+  Delete "C:\Users\Public\Desktop\Clash Max.lnk"
+  Delete "C:\Users\Public\Desktop\clash-max.lnk"
+
+  ; 枚举所有用户配置文件目录
+  SetRegView 64
+  ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList" ""
+
+  ; 初始化循环
+  StrCpy $R1 0
+  Loop:
+    EnumRegKey $R2 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList" $R1
+    ${If} $R2 == ""
+      Goto Done
+    ${EndIf}
+
+    ; 读取用户配置文件路径
+    ReadRegStr $R3 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$R2" "ProfileImagePath"
+    ${If} $R3 != ""
+      ; 构建用户桌面路径
+      StrCpy $R4 "$R3\Desktop"
+
+      ; 删除该用户桌面的快捷方式
+      Delete "$R4\Clash Max.lnk"
+      Delete "$R4\clash-max.lnk"
+
+      DetailPrint "尝试删除用户 '$R3' 桌面的 Clash Max 快捷方式"
+    ${EndIf}
+
+    ; 递增循环计数器
+    IntOp $R1 $R1 + 1
+    Goto Loop
+  Done:
+
+  DetailPrint "所有用户桌面快捷方式删除完成"
+
+  ; 删除用户开始菜单文件夹
   Delete "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
-  ; 兼容旧名称快捷方式
-  Delete "$SMPROGRAMS\$AppStartMenuFolder\clash-max.lnk"
-  RMDir "$SMPROGRAMS\$AppStartMenuFolder"
+  Delete "$SMPROGRAMS\$AppStartMenuFolder\${MAINBINARYNAME}.lnk"
+  RMDir /r /REBOOTOK "$SMPROGRAMS\$AppStartMenuFolder"
 
-  ; Remove desktop shortcuts
-  Delete "$DESKTOP\${PRODUCTNAME}.lnk"
-  ; 兼容旧名称快捷方式
-  Delete "$DESKTOP\clash-max.lnk"
+  ; 删除系统级开始菜单中的 Clash Max
+  Delete "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Max\Clash Max.lnk"
+  Delete "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Max\clash-max.lnk"
+  RMDir /r /REBOOTOK "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Max"
+
+  ; 删除所有带 Clash Max 或 clash-max 的注册表项
+  DetailPrint "开始清理所有 Clash Max 相关的注册表项..."
+
+  ; 设置注册表查看模式 (64位)
+  SetRegView 64
+
+  ; 清理 CurrentVersion\Run 中的自启动项
+  StrCpy $R1 "Software\Microsoft\Windows\CurrentVersion\Run"
+  DeleteRegValue HKCU "$R1" "Clash Max"
+  DeleteRegValue HKCU "$R1" "clash-max"
+  DeleteRegValue HKLM "$R1" "Clash Max"
+  DeleteRegValue HKLM "$R1" "clash-max"
+
+  ; 清理 App Paths
+  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Clash Max.exe"
+  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\clash-max.exe"
+
+  ; 删除指定的注册表路径
+  DeleteRegKey HKLM "Software\Clash Max Rev"
+  DeleteRegKey HKCU "Software\Clash Max Rev"
+  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ClashMax"
+  DeleteRegKey HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Clash Max"
+
+  ; 清理 Uninstall 信息
+  StrCpy $R1 0
+  EnumUninstallLoop:
+    EnumRegKey $R2 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" $R1
+    ${If} $R2 == ""
+      Goto EnumUninstallDone
+    ${EndIf}
+
+    ReadRegStr $R3 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$R2" "DisplayName"
+    ${If} $R3 != ""
+      StrCmp $R3 "Clash Max" 0 +3
+      StrCmp $R3 "clash-max" 0 +2
+      DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$R2"
+    ${EndIf}
+
+    IntOp $R1 $R1 + 1
+    Goto EnumUninstallLoop
+  EnumUninstallDone:
+
+  ; 清理用户特定的注册表项
+  StrCpy $R1 0
+  EnumHKCULoop:
+    EnumRegKey $R2 HKCU "SOFTWARE" $R1
+    ${If} $R2 == ""
+      Goto EnumHKCUDone
+    ${EndIf}
+
+    ReadRegStr $R3 HKCU "SOFTWARE\$R2" ""
+    ${If} $R3 != ""
+      StrCmp $R3 "Clash Max" 0 +3
+      StrCmp $R3 "clash-max" 0 +2
+      DeleteRegKey HKCU "SOFTWARE\$R2"
+    ${EndIf}
+
+    IntOp $R1 $R1 + 1
+    Goto EnumHKCULoop
+  EnumHKCUDone:
+
+  ; 清理系统范围的注册表项
+  StrCpy $R1 0
+  EnumHKLMLoop:
+    EnumRegKey $R2 HKLM "SOFTWARE" $R1
+    ${If} $R2 == ""
+      Goto EnumHKLMDone
+    ${EndIf}
+
+    ReadRegStr $R3 HKLM "SOFTWARE\$R2" ""
+    ${If} $R3 != ""
+      StrCmp $R3 "Clash Max" 0 +3
+      StrCmp $R3 "clash-max" 0 +2
+      DeleteRegKey HKLM "SOFTWARE\$R2"
+    ${EndIf}
+
+    IntOp $R1 $R1 + 1
+    Goto EnumHKLMLoop
+  EnumHKLMDone:
+
+  DetailPrint "注册表清理完成"
+
 
   ; Remove registry information for add/remove programs
   !if "${INSTALLMODE}" == "both"
@@ -1014,10 +1139,6 @@ Section Uninstall
     RmDir /r "$APPDATA\${BUNDLEID}"
     RmDir /r "$LOCALAPPDATA\${BUNDLEID}"
   ${EndIf}
-
-  ;删除 .window-state.json 文件
-  SetShellVarContext current
-  Delete "$APPDATA\io.github.cg3s.clash-max\.window-state.json"
 
   ${GetOptions} $CMDLINE "/P" $R0
   IfErrors +2 0
@@ -1051,7 +1172,6 @@ FunctionEnd
         System::Free $4
         System::Free $5
         ${IPropertyStore::Commit} $2 ""
-        ${IUnknown::Release} $2 ""
         ${IPersistFile::Save} $1 '("${shortcut}",1)'
       ${EndIf}
       ${IUnknown::Release} $1 ""

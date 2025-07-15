@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo } from "react";
 import { useVerge } from "@/hooks/use-verge";
 import { filterSort } from "./use-filter-sort";
 import { useWindowWidth } from "./use-window-width";
@@ -110,7 +110,8 @@ export const useRenderList = (mode: string) => {
       (mode === "rule" && !groups.length) ||
       (mode === "global" && proxies.length < 2)
     ) {
-      setTimeout(() => refreshProxy(), 500);
+      const handle = setTimeout(() => refreshProxy(), 500);
+      return () => clearTimeout(handle);
     }
   }, [proxiesData, mode, refreshProxy]);
 

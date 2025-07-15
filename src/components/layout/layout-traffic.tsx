@@ -13,10 +13,10 @@ import { TrafficGraph, type TrafficRef } from "./traffic-graph";
 import { useVisibility } from "@/hooks/use-visibility";
 import parseTraffic from "@/utils/parse-traffic";
 import useSWRSubscription from "swr/subscription";
-import { createSockette, createAuthSockette } from "@/utils/websocket";
+import { createAuthSockette } from "@/utils/websocket";
 import { useTranslation } from "react-i18next";
 import { isDebugEnabled, gc } from "@/services/api";
-import { useAppData } from "@/providers/app-data-provider";
+import useSWR from "swr";
 
 interface MemoryUsage {
   inuse: number;
@@ -35,12 +35,15 @@ export const LayoutTraffic = () => {
 
   const trafficRef = useRef<TrafficRef>(null);
   const pageVisible = useVisibility();
-  const [isDebug, setIsDebug] = useState(false);
 
-  useEffect(() => {
-    isDebugEnabled().then((flag) => setIsDebug(flag));
-    return () => {};
-  }, [isDebug]);
+  const { data: isDebug } = useSWR(
+    "clash-verge-rev-internal://isDebugEnabled",
+    () => isDebugEnabled(),
+    {
+      // default value before is fetched
+      fallbackData: false,
+    },
+  );
 
   const { data: traffic = { up: 0, down: 0 } } = useSWRSubscription<
     ITrafficItem,

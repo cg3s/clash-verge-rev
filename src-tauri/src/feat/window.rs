@@ -3,56 +3,68 @@ use crate::AppHandleManager;
 use crate::{
     config::Config,
     core::{handle, sysopt, CoreManager},
+    logging,
     module::mihomo::MihomoManager,
-    utils::resolve,
+    utils::logging::Type,
 };
 
 /// Open or close the dashboard window
 #[allow(dead_code)]
 pub fn open_or_close_dashboard() {
-    println!("Attempting to open/close dashboard");
-    log::info!(target: "app", "Attempting to open/close dashboard");
+    open_or_close_dashboard_internal(false)
+}
 
-    if let Some(window) = handle::Handle::global().get_window() {
-        println!("Found existing window");
-        log::info!(target: "app", "Found existing window");
+/// Open or close the dashboard window (hotkey call, dispatched to main thread)
+#[allow(dead_code)]
+pub fn open_or_close_dashboard_hotkey() {
+    open_or_close_dashboard_internal(true)
+}
 
-        // 如果窗口存在，则切换其显示状态
-        match window.is_visible() {
-            Ok(visible) => {
-                println!("Window visibility status: {}", visible);
-                log::info!(target: "app", "Window visibility status: {}", visible);
+/// Internal implementation for opening/closing dashboard
+fn open_or_close_dashboard_internal(bypass_debounce: bool) {
+    use crate::process::AsyncHandler;
+    use crate::utils::window_manager::WindowManager;
 
-                if visible {
-                    println!("Attempting to hide window");
-                    log::info!(target: "app", "Attempting to hide window");
-                    let _ = window.hide();
-                } else {
-                    println!("Attempting to show and focus window");
-                    log::info!(target: "app", "Attempting to show and focus window");
-                    if window.is_minimized().unwrap_or(false) {
-                        let _ = window.unminimize();
-                    }
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
+    log::info!(target: "app", "Attempting to open/close dashboard (绕过防抖: {bypass_debounce})");
+
+    // 热键调用调度到主线程执行，避免 WebView 创建死锁
+    if bypass_debounce {
+        log::info!(target: "app", "热键调用，调度到主线程执行窗口操作");
+
+        AsyncHandler::spawn(move || async move {
+            log::info!(target: "app", "主线程中执行热键窗口操作");
+
+            if crate::module::lightweight::is_in_lightweight_mode() {
+                log::info!(target: "app", "Currently in lightweight mode, exiting lightweight mode");
+                crate::module::lightweight::exit_lightweight_mode();
+                log::info!(target: "app", "Creating new window after exiting lightweight mode");
+                let result = WindowManager::show_main_window();
+                log::info!(target: "app", "Window operation result: {result:?}");
+                return;
             }
-            Err(e) => {
-                println!("Failed to get window visibility: {:?}", e);
-                log::error!(target: "app", "Failed to get window visibility: {:?}", e);
-            }
-        }
-    } else {
-        println!("No existing window found, creating new window");
-        log::info!(target: "app", "No existing window found, creating new window");
-        resolve::create_window(true);
+
+            let result = WindowManager::toggle_main_window();
+            log::info!(target: "app", "Window toggle result: {result:?}");
+        });
+        return;
     }
+    if crate::module::lightweight::is_in_lightweight_mode() {
+        log::info!(target: "app", "Currently in lightweight mode, exiting lightweight mode");
+        crate::module::lightweight::exit_lightweight_mode();
+        log::info!(target: "app", "Creating new window after exiting lightweight mode");
+        let result = WindowManager::show_main_window();
+        log::info!(target: "app", "Window operation result: {result:?}");
+        return;
+    }
+
+    let result = WindowManager::toggle_main_window();
+    log::info!(target: "app", "Window toggle result: {result:?}");
 }
 
 /// 异步优化的应用退出函数
 pub fn quit() {
     use crate::process::AsyncHandler;
-    log::debug!(target: "app", "启动退出流程");
+    logging!(debug, Type::System, true, "启动退出流程");
 
     // 获取应用句柄并设置退出标志
     let app_handle = handle::Handle::global().app_handle().unwrap();
@@ -66,10 +78,16 @@ pub fn quit() {
 
     // 使用异步任务处理资源清理，避免阻塞
     AsyncHandler::spawn(move || async move {
-        log::info!(target: "app", "开始异步清理资源");
+        logging!(info, Type::System, true, "开始异步清理资源");
         let cleanup_result = clean_async().await;
 
-        log::info!(target: "app", "资源清理完成，退出代码: {}", if cleanup_result { 0 } else { 1 });
+        logging!(
+            info,
+            Type::System,
+            true,
+            "资源清理完成，退出代码: {}",
+            if cleanup_result { 0 } else { 1 }
+        );
         app_handle.exit(if cleanup_result { 0 } else { 1 });
     });
 }
@@ -77,11 +95,11 @@ pub fn quit() {
 async fn clean_async() -> bool {
     use tokio::time::{timeout, Duration};
 
-    log::info!(target: "app", "开始执行异步清理操作...");
+    logging!(info, Type::System, true, "开始执行异步清理操作...");
 
     // 1. 处理TUN模式
     let tun_task = async {
-        if Config::verge().data().enable_tun_mode.unwrap_or(false) {
+        if Config::verge().data_mut().enable_tun_mode.unwrap_or(false) {
             let disable_tun = serde_json::json!({
                 "tun": {
                     "enable": false
@@ -143,7 +161,12 @@ async fn clean_async() -> bool {
     // 4. DNS恢复（仅macOS）
     #[cfg(target_os = "macos")]
     let dns_task = async {
-        match timeout(Duration::from_millis(1000), resolve::restore_public_dns()).await {
+        match timeout(
+            Duration::from_millis(1000),
+            crate::utils::resolve::restore_public_dns(),
+        )
+        .await
+        {
             Ok(_) => {
                 log::info!(target: "app", "DNS设置已恢复");
                 true
@@ -165,88 +188,51 @@ async fn clean_async() -> bool {
 
     let all_success = tun_success && proxy_success && core_success && dns_success;
 
-    log::info!(
-        target: "app",
+    logging!(
+        info,
+        Type::System,
+        true,
         "异步清理操作完成 - TUN: {}, 代理: {}, 核心: {}, DNS: {}, 总体: {}",
-        tun_success, proxy_success, core_success, dns_success, all_success
+        tun_success,
+        proxy_success,
+        core_success,
+        dns_success,
+        all_success
     );
 
     all_success
 }
 
 pub fn clean() -> bool {
-    use tokio::time::{timeout, Duration};
+    use crate::process::AsyncHandler;
 
-    // 使用异步处理
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    let cleanup_result = rt.block_on(async {
-        log::info!(target: "app", "开始执行清理操作...");
+    let (tx, rx) = std::sync::mpsc::channel();
 
-        // 1. 处理TUN模式 - 并行执行，减少等待时间
-        let tun_task = async {
-            if Config::verge().data().enable_tun_mode.unwrap_or(false) {
-                let disable_tun = serde_json::json!({
-                    "tun": {
-                        "enable": false
-                    }
-                });
-                timeout(
-                    Duration::from_secs(2),
-                    MihomoManager::global().patch_configs(disable_tun),
-                )
-                .await
-                .is_ok()
-            } else {
-                true
-            }
-        };
+    AsyncHandler::spawn(move || async move {
+        logging!(info, Type::System, true, "开始执行清理操作...");
 
-        // 2. 系统代理重置
-        let proxy_task = async {
-            timeout(
-                Duration::from_secs(2),
-                sysopt::Sysopt::global().reset_sysproxy(),
-            )
-            .await
-            .is_ok()
-        };
+        // 使用已有的异步清理函数
+        let cleanup_result = clean_async().await;
 
-        // 3. 核心服务停止
-        let core_task = async {
-            timeout(Duration::from_secs(2), CoreManager::global().stop_core())
-                .await
-                .is_ok()
-        };
-
-        // 4. DNS恢复（仅macOS）
-        #[cfg(target_os = "macos")]
-        let dns_task = async {
-            timeout(Duration::from_millis(800), resolve::restore_public_dns())
-                .await
-                .is_ok()
-        };
-
-        // 并行执行所有清理任务，提高效率
-        let (tun_success, proxy_success, core_success) =
-            tokio::join!(tun_task, proxy_task, core_task);
-
-        #[cfg(target_os = "macos")]
-        let dns_success = dns_task.await;
-        #[cfg(not(target_os = "macos"))]
-        let dns_success = true;
-
-        let all_success = tun_success && proxy_success && core_success && dns_success;
-
-        log::info!(
-            target: "app",
-            "清理操作完成 - TUN: {}, 代理: {}, 核心: {}, DNS: {}, 总体: {}",
-            tun_success, proxy_success, core_success, dns_success, all_success
-        );
-
-        all_success
+        // 发送结果
+        let _ = tx.send(cleanup_result);
     });
 
-    cleanup_result
+    match rx.recv_timeout(std::time::Duration::from_secs(8)) {
+        Ok(result) => {
+            logging!(info, Type::System, true, "清理操作完成，结果: {}", result);
+            result
+        }
+        Err(_) => {
+            logging!(
+                warn,
+                Type::System,
+                true,
+                "清理操作超时，返回成功状态避免阻塞"
+            );
+            true
+        }
+    }
 }
 
 #[cfg(target_os = "macos")]
@@ -254,7 +240,7 @@ pub fn hide() {
     use crate::module::lightweight::add_light_weight_timer;
 
     let enable_auto_light_weight_mode = Config::verge()
-        .data()
+        .data_mut()
         .enable_auto_light_weight_mode
         .unwrap_or(false);
 
