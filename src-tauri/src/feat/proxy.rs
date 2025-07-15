@@ -80,8 +80,8 @@ pub fn copy_clash_env() {
             .verge_mixed_port
             .unwrap_or(7897)
     };
-    let http_proxy = format!("http://{clash_verge_rev_ip}:{port}");
-    let socks5_proxy = format!("socks5://{clash_verge_rev_ip}:{port}");
+    let http_proxy = format!("http://{clash_max_ip}:{port}");
+    let socks5_proxy = format!("socks5://{clash_max_ip}:{port}");
 
     let cliboard = app_handle.clipboard();
     let env_type = { Config::verge().latest_ref().env_type.clone() };
