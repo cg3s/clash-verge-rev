@@ -817,7 +817,7 @@ Section Install
     File /a "/oname={{this}}" "{{@key}}"
   {{/each}}
 
-  !insertmacro StartVergeService
+  !insertmacro StartMaxService
 
   ; Create uninstaller
   WriteUninstaller "$INSTDIR\uninstall.exe"
