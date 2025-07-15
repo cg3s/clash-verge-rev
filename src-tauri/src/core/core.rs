@@ -52,11 +52,7 @@ impl fmt::Display for RunningMode {
     }
 }
 
-<<<<<<< HEAD
-const CLASH_CORES: [&str; 2] = ["max-mihomo", "max-mihomo-alpha"];
-=======
 use crate::config::IVerge;
->>>>>>> upstream/dev
 
 impl CoreManager {
     /// 检查文件是否为脚本文件
@@ -149,13 +145,8 @@ impl CoreManager {
         });
         help::save_yaml(
             &runtime_path,
-<<<<<<< HEAD
-            &Config::clash().latest().0,
-            Some("# Clash Max Runtime"),
-=======
             &Config::clash().latest_ref().0,
-            Some("# Clash Verge Runtime"),
->>>>>>> upstream/dev
+            Some("# Clash Max Runtime"),
         )?;
         handle::Handle::notice_message(msg_type, msg_content);
         Ok(())
@@ -256,12 +247,7 @@ impl CoreManager {
             config_path
         );
 
-<<<<<<< HEAD
-        let clash_core = { Config::verge().latest().clash_core.clone() };
-        let clash_core = clash_core.unwrap_or("max-mihomo".into());
-=======
         let clash_core = Config::verge().latest_ref().get_valid_clash_core();
->>>>>>> upstream/dev
         logging!(info, Type::Config, true, "使用内核: {}", clash_core);
 
         let app_handle = handle::Handle::global().app_handle().unwrap();
