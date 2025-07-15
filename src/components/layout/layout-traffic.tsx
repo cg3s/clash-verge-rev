@@ -16,6 +16,7 @@ import useSWRSubscription from "swr/subscription";
 import { createAuthSockette } from "@/utils/websocket";
 import { useTranslation } from "react-i18next";
 import { isDebugEnabled, gc } from "@/services/api";
+import { useAppData } from "@/providers/app-data-provider";
 import useSWR from "swr";
 
 interface MemoryUsage {
