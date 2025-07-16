@@ -427,7 +427,7 @@ Function .onInit
   !endif
 FunctionEnd
 
-!macro CheckAllVergeProcesses
+!macro CheckAllMaxProcesses
   ; Check if clash-verge-service.exe is running
   !if "${INSTALLMODE}" == "currentUser"
     nsis_tauri_utils::FindProcessCurrentUser "clash-verge-service.exe"
