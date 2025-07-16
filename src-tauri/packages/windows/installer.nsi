@@ -760,7 +760,7 @@ Section Install
   SetOutPath $INSTDIR
   nsExec::Exec 'netsh int tcp res'
   !insertmacro CheckIfAppIsRunning
-  !insertmacro CheckAllVergeProcesses
+  !insertmacro CheckAllMaxProcesses
 
   ; 删除 window-state.json 文件 .window-state.json 文件
   DetailPrint "开始删除删除 window-state.json or .window-state.json"
