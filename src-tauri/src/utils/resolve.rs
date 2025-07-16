@@ -334,7 +334,7 @@ pub fn create_window(is_show: bool) -> bool {
         "main", /* the unique window label */
         tauri::WebviewUrl::App("index.html".into()),
     )
-    .title("Clash Max")
+    .title("Clash Max v2.3.2")
     .center()
     .decorations(true)
     .fullscreen(false)
@@ -371,7 +371,7 @@ pub fn create_window(is_show: bool) -> bool {
                             animation: spin 1s linear infinite;
                         "></div>
                     </div>
-                    <div style="font-size: 14px; opacity: 0.7;">Loading Clash Verge...</div>
+                    <div style="font-size: 14px; opacity: 0.7;">Loading Clash Max...</div>
                 </div>
                 <style>
                     @keyframes spin {
