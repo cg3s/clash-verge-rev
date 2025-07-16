@@ -414,7 +414,7 @@ impl Tray {
 
         if let Some(tray) = app_handle.tray_by_id("main") {
             let _ = tray.set_tooltip(Some(&format!(
-                "Clash Verge {version}\n{}: {}\n{}: {}\n{}: {}",
+                "Clash Max {version}\n{}: {}\n{}: {}\n{}: {}",
                 t("SysProxy"),
                 switch_map[system_proxy],
                 t("TUN"),
@@ -710,7 +710,7 @@ fn create_tray_menu(
     let app_version = &MenuItem::with_id(
         app_handle,
         "app_version",
-        format!("{} {version}", t("Verge Version")),
+        format!("{} {version}", t("Max Version")),
         true,
         None::<&str>,
     )

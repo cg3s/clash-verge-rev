@@ -1095,7 +1095,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b94f61472cee1439c0b966b47e3aca9ae07e45d070759512cd390ea2bebc6675"
 
 [[package]]
-name = "clash-verge"
+name = "clash-max"
 version = "2.3.2"
 dependencies = [
  "aes-gcm",
@@ -6859,7 +6859,7 @@ dependencies = [
  "ntapi",
  "objc2-core-foundation",
  "objc2-io-kit",
- "windows 0.61.1",
+ "windows 0.61.3",
 ]
 
 [[package]]

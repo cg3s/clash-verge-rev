@@ -760,13 +760,13 @@ Section Install
   SetOutPath $INSTDIR
   nsExec::Exec 'netsh int tcp res'
   !insertmacro CheckIfAppIsRunning
-  !insertmacro CheckAllVergeProcesses
+  !insertmacro CheckAllMaxProcesses
 
   ; 删除 window-state.json 文件 .window-state.json 文件
   DetailPrint "开始删除删除 window-state.json or .window-state.json"
   SetShellVarContext current
-  Delete "$APPDATA\io.github.clash-verge-rev.clash-verge-rev\window-state.json"
-  Delete "$APPDATA\io.github.clash-verge-rev.clash-verge-rev\.window-state.json"
+  Delete "$APPDATA\cg3s.clash-max\window-state.json"
+  Delete "$APPDATA\cg3s.clash-max\.window-state.json"
 
   ; 清理自启动注册表项
   DetailPrint "Cleaning auto-launch registry entries..."
@@ -775,31 +775,31 @@ Section Install
 
   SetRegView 64
   ; 清理旧版本的注册表项 (Clash Verge)
-  ReadRegStr $R2 HKCU "$R1" "Clash Verge"
+  ReadRegStr $R2 HKCU "$R1" "Clash Max"
   ${If} $R2 != ""
-    DeleteRegValue HKCU "$R1" "Clash Verge"
+    DeleteRegValue HKCU "$R1" "Clash Max"
   ${EndIf}
 
-  ReadRegStr $R2 HKLM "$R1" "Clash Verge"
+  ReadRegStr $R2 HKLM "$R1" "Clash Max"
   ${If} $R2 != ""
-    DeleteRegValue HKLM "$R1" "Clash Verge"
+    DeleteRegValue HKLM "$R1" "Clash Max"
   ${EndIf}
 
-  ; 清理新版本的注册表项 (clash-verge)
-  ReadRegStr $R2 HKCU "$R1" "clash-verge"
+  ; 清理新版本的注册表项 (clash-max)
+  ReadRegStr $R2 HKCU "$R1" "clash-max"
   ${If} $R2 != ""
-    DeleteRegValue HKCU "$R1" "clash-verge"
+    DeleteRegValue HKCU "$R1" "clash-max"
   ${EndIf}
 
-  ReadRegStr $R2 HKLM "$R1" "clash-verge"
+  ReadRegStr $R2 HKLM "$R1" "clash-max"
   ${If} $R2 != ""
-    DeleteRegValue HKLM "$R1" "clash-verge"
+    DeleteRegValue HKLM "$R1" "clash-max"
   ${EndIf}
 
   ; Delete old files before installation
-    ; Delete clash-verge.desktop
-  IfFileExists "$INSTDIR\Clash Verge.exe" 0 +2
-    Delete "$INSTDIR\Clash Verge.exe"
+    ; Delete clash-max.desktop
+  IfFileExists "$INSTDIR\Clash Max.exe" 0 +2
+    Delete "$INSTDIR\Clash Max.exe"
 
   ; Copy main executable
   File "${MAINBINARYSRCPATH}"
@@ -920,14 +920,14 @@ FunctionEnd
 Section Uninstall
 
   !insertmacro CheckIfAppIsRunning
-  !insertmacro CheckAllVergeProcesses
+  !insertmacro CheckAllMaxProcesses
   !insertmacro RemoveVergeService
 
   ; 删除 window-state.json 文件 .window-state.json 文件
   DetailPrint "开始删除删除 window-state.json or .window-state.json"
   SetShellVarContext current
-  Delete "$APPDATA\io.github.clash-verge-rev.clash-verge-rev\window-state.json"
-  Delete "$APPDATA\io.github.clash-verge-rev.clash-verge-rev\.window-state.json"
+  Delete "$APPDATA\cg3s.clash-max\window-state.json"
+  Delete "$APPDATA\cg3s.clash-max\.window-state.json"
 
   ; 清理自启动注册表项
   DetailPrint "Cleaning auto-launch registry entries..."
@@ -935,26 +935,26 @@ Section Uninstall
   StrCpy $R1 "Software\Microsoft\Windows\CurrentVersion\Run"
 
   SetRegView 64
-  ; 清理旧版本的注册表项 (Clash Verge)
-  ReadRegStr $R2 HKCU "$R1" "Clash Verge"
+  ; 清理旧版本的注册表项 (Clash Max)
+  ReadRegStr $R2 HKCU "$R1" "Clash Max"
   ${If} $R2 != ""
-    DeleteRegValue HKCU "$R1" "Clash Verge"
+    DeleteRegValue HKCU "$R1" "Clash Max"
   ${EndIf}
 
-  ReadRegStr $R2 HKLM "$R1" "Clash Verge"
+  ReadRegStr $R2 HKLM "$R1" "Clash Max"
   ${If} $R2 != ""
-    DeleteRegValue HKLM "$R1" "Clash Verge"
+    DeleteRegValue HKLM "$R1" "Clash Max"
   ${EndIf}
 
-  ; 清理新版本的注册表项 (clash-verge)
-  ReadRegStr $R2 HKCU "$R1" "clash-verge"
+  ; 清理新版本的注册表项 (clash-max)
+  ReadRegStr $R2 HKCU "$R1" "clash-max"
   ${If} $R2 != ""
-    DeleteRegValue HKCU "$R1" "clash-verge"
+    DeleteRegValue HKCU "$R1" "clash-max"
   ${EndIf}
 
-  ReadRegStr $R2 HKLM "$R1" "clash-verge"
+  ReadRegStr $R2 HKLM "$R1" "clash-max"
   ${If} $R2 != ""
-    DeleteRegValue HKLM "$R1" "clash-verge"
+    DeleteRegValue HKLM "$R1" "clash-max"
   ${EndIf}
 
   ; Delete the app directory and its content from disk
@@ -971,9 +971,9 @@ Section Uninstall
     Delete "$INSTDIR\\{{this}}"
   {{/each}}
 
-  ; Delete clash-verge.desktop
-  IfFileExists "$INSTDIR\Clash Verge.exe" 0 +2
-    Delete "$INSTDIR\Clash Verge.exe"
+  ; Delete clash-max.desktop
+  IfFileExists "$INSTDIR\Clash Max.exe" 0 +2
+    Delete "$INSTDIR\Clash Max.exe"
 
   ; Delete uninstaller
   Delete "$INSTDIR\uninstall.exe"
@@ -994,8 +994,8 @@ Section Uninstall
   DetailPrint "开始删除所有用户桌面的 Clash Verge 快捷方式..."
 
   ; 删除公共桌面快捷方式
-  Delete "C:\Users\Public\Desktop\Clash Verge.lnk"
-  Delete "C:\Users\Public\Desktop\clash-verge.lnk"
+  Delete "C:\Users\Public\Desktop\Clash Max.lnk"
+  Delete "C:\Users\Public\Desktop\clash-max.lnk"
 
   ; 枚举所有用户配置文件目录
   SetRegView 64
@@ -1016,10 +1016,10 @@ Section Uninstall
       StrCpy $R4 "$R3\Desktop"
 
       ; 删除该用户桌面的快捷方式
-      Delete "$R4\Clash Verge.lnk"
-      Delete "$R4\clash-verge.lnk"
+      Delete "$R4\Clash Max.lnk"
+      Delete "$R4\clash-max.lnk"
 
-      DetailPrint "尝试删除用户 '$R3' 桌面的 Clash Verge 快捷方式"
+      DetailPrint "尝试删除用户 '$R3' 桌面的 Clash Max 快捷方式"
     ${EndIf}
 
     ; 递增循环计数器
@@ -1034,33 +1034,33 @@ Section Uninstall
   Delete "$SMPROGRAMS\$AppStartMenuFolder\${MAINBINARYNAME}.lnk"
   RMDir /r /REBOOTOK "$SMPROGRAMS\$AppStartMenuFolder"
 
-  ; 删除系统级开始菜单中的 Clash Verge
-  Delete "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Verge\Clash Verge.lnk"
-  Delete "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Verge\clash-verge.lnk"
-  RMDir /r /REBOOTOK "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Verge"
+  ; 删除系统级开始菜单中的 Clash Max
+  Delete "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Max\Clash Max.lnk"
+  Delete "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Max\clash-max.lnk"
+  RMDir /r /REBOOTOK "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Max"
 
-  ; 删除所有带 Clash Verge 或 clash-verge 的注册表项
-  DetailPrint "开始清理所有 Clash Verge 相关的注册表项..."
+  ; 删除所有带 Clash Max 或 clash-max 的注册表项
+  DetailPrint "开始清理所有 Clash Max 相关的注册表项..."
 
   ; 设置注册表查看模式 (64位)
   SetRegView 64
 
   ; 清理 CurrentVersion\Run 中的自启动项
   StrCpy $R1 "Software\Microsoft\Windows\CurrentVersion\Run"
-  DeleteRegValue HKCU "$R1" "Clash Verge"
-  DeleteRegValue HKCU "$R1" "clash-verge"
-  DeleteRegValue HKLM "$R1" "Clash Verge"
-  DeleteRegValue HKLM "$R1" "clash-verge"
+  DeleteRegValue HKCU "$R1" "Clash Max"
+  DeleteRegValue HKCU "$R1" "clash-max"
+  DeleteRegValue HKLM "$R1" "Clash Max"
+  DeleteRegValue HKLM "$R1" "clash-max"
 
   ; 清理 App Paths
-  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Clash Verge.exe"
-  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\clash-verge.exe"
+  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Clash Max.exe"
+  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\clash-max.exe"
 
   ; 删除指定的注册表路径
-  DeleteRegKey HKLM "Software\Clash Verge Rev"
-  DeleteRegKey HKCU "Software\Clash Verge Rev"
-  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ClashVerge"
-  DeleteRegKey HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Clash Verge"
+  DeleteRegKey HKLM "Software\Clash Max"
+  DeleteRegKey HKCU "Software\Clash Max"
+  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ClashMax"
+  DeleteRegKey HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Clash Max"
 
   ; 清理 Uninstall 信息
   StrCpy $R1 0
@@ -1072,8 +1072,8 @@ Section Uninstall
 
     ReadRegStr $R3 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$R2" "DisplayName"
     ${If} $R3 != ""
-      StrCmp $R3 "Clash Verge" 0 +3
-      StrCmp $R3 "clash-verge" 0 +2
+      StrCmp $R3 "Clash Max" 0 +3
+      StrCmp $R3 "clash-max" 0 +2
       DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$R2"
     ${EndIf}
 
@@ -1091,8 +1091,8 @@ Section Uninstall
 
     ReadRegStr $R3 HKCU "SOFTWARE\$R2" ""
     ${If} $R3 != ""
-      StrCmp $R3 "Clash Verge" 0 +3
-      StrCmp $R3 "clash-verge" 0 +2
+      StrCmp $R3 "Clash Max" 0 +3
+      StrCmp $R3 "clash-max" 0 +2
       DeleteRegKey HKCU "SOFTWARE\$R2"
     ${EndIf}
 
@@ -1110,8 +1110,8 @@ Section Uninstall
 
     ReadRegStr $R3 HKLM "SOFTWARE\$R2" ""
     ${If} $R3 != ""
-      StrCmp $R3 "Clash Verge" 0 +3
-      StrCmp $R3 "clash-verge" 0 +2
+      StrCmp $R3 "Clash Max" 0 +3
+      StrCmp $R3 "clash-max" 0 +2
       DeleteRegKey HKLM "SOFTWARE\$R2"
     ${EndIf}
 

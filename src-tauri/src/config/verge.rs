@@ -354,9 +354,9 @@ impl IVerge {
             env_type: Some("bash".into()),
             #[cfg(target_os = "windows")]
             env_type: Some("powershell".into()),
-            start_page: Some("/home".into()),
+            start_page: Some("/dashboard".into()),
             traffic_graph: Some(true),
-            enable_memory_usage: Some(true),
+            enable_memory_usage: Some(false),
             enable_group_icon: Some(true),
             #[cfg(target_os = "macos")]
             tray_icon: Some("monochrome".into()),
@@ -409,7 +409,7 @@ impl IVerge {
 
     /// Save IVerge App Config
     pub fn save_file(&self) -> Result<()> {
-        help::save_yaml(&dirs::verge_path()?, &self, Some("# Clash Verge Config"))
+        help::save_yaml(&dirs::verge_path()?, &self, Some("# Clash Max Config"))
     }
 
     /// patch verge config

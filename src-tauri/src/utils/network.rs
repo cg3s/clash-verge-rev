@@ -214,8 +214,8 @@ impl NetworkManager {
             use crate::utils::resolve::VERSION;
 
             let version = match VERSION.get() {
-                Some(v) => format!("clash-verge/v{v}"),
-                None => "clash-verge/unknown".to_string(),
+                Some(v) => format!("clash-max/v{v}"),
+                None => "clash-max/unknown".to_string(),
             };
 
             builder = builder.user_agent(version);

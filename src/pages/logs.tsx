@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Box, Button, IconButton, MenuItem } from "@mui/material";
+import { Box, Button, MenuItem } from "@mui/material";
 import { Virtuoso } from "react-virtuoso";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "foxact/use-local-storage";
@@ -7,6 +7,7 @@ import { useLocalStorage } from "foxact/use-local-storage";
 import {
   PlayCircleOutlineRounded,
   PauseCircleOutlineRounded,
+  CleaningServicesOutlined
 } from "@mui/icons-material";
 import { LogLevel } from "@/hooks/use-log-data";
 import { useClashInfo } from "@/hooks/use-clash";
@@ -97,23 +98,11 @@ const LogPage = () => {
       }}
       header={
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <IconButton
-            title={t(enableLog ? "Pause" : "Resume")}
-            size="small"
-            color="inherit"
-            onClick={handleToggleLog}
-          >
-            {enableLog ? (
-              <PauseCircleOutlineRounded />
-            ) : (
-              <PlayCircleOutlineRounded />
-            )}
-          </IconButton>
-
           {enableLog === true && (
             <Button
               size="small"
               variant="contained"
+              startIcon={<CleaningServicesOutlined  />}
               onClick={() => {
                 clearGlobalLogs();
               }}
@@ -121,6 +110,22 @@ const LogPage = () => {
               {t("Clear")}
             </Button>
           )}
+
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleToggleLog}
+            color={enableLog ? "error" : "primary"}
+            startIcon={
+              enableLog ? (
+                <PauseCircleOutlineRounded />
+              ) : (
+                <PlayCircleOutlineRounded />
+              )
+            }
+          >
+            {enableLog ? t("Pause") : t("Record")}
+          </Button>          
         </Box>
       }
     >

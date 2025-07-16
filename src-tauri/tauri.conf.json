@@ -3,7 +3,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "bundle": {
     "active": true,
-    "longDescription": "Clash Verge Rev",
+    "longDescription": "Clash Max",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -12,11 +12,11 @@
       "icons/icon.ico"
     ],
     "resources": ["resources", "resources/locales/*"],
-    "publisher": "Clash Verge Rev",
+    "publisher": "Cg3s, Inc",
     "externalBin": ["sidecar/verge-mihomo", "sidecar/verge-mihomo-alpha"],
     "copyright": "GNU General Public License v3.0",
     "category": "DeveloperTool",
-    "shortDescription": "Clash Verge Rev",
+    "shortDescription": "Clash Max",
     "createUpdaterArtifacts": true
   },
   "build": {
@@ -25,18 +25,18 @@
     "beforeDevCommand": "pnpm run web:dev",
     "devUrl": "http://localhost:3000/"
   },
-  "productName": "Clash Verge",
-  "identifier": "io.github.clash-verge-rev.clash-verge-rev",
+  "productName": "Clash Max",
+  "identifier": "cg3s.clash-max",
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQyOEMyRjBCQkVGOUJEREYKUldUZnZmbStDeStNMHU5Mmo1N24xQXZwSVRYbXA2NUpzZE5oVzlqeS9Bc0t6RVV4MmtwVjBZaHgK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDYyMzMwRTExQ0M1RTNGRkEKUldUNlAxN01FUTR6WWh0R244SnFId2tSYVBnbzIyRlI4bXNqblJwU3ErSjQ4bW5YOTBmaFVBZ0YK",
       "endpoints": [
-        "https://download.clashverge.dev/https://github.com/clash-verge-rev/clash-verge-rev/releases/download/updater/update-proxy.json",
-        "https://gh-proxy.com/https://github.com/clash-verge-rev/clash-verge-rev/releases/download/updater/update-proxy.json",
-        "https://github.com/clash-verge-rev/clash-verge-rev/releases/download/updater/update.json",
-        "https://download.clashverge.dev/https://github.com/clash-verge-rev/clash-verge-rev/releases/download/updater-alpha/update-alpha-proxy.json",
-        "https://gh-proxy.com/https://github.com/clash-verge-rev/clash-verge-rev/releases/download/updater-alpha/update-alpha-proxy.json",
-        "https://github.com/clash-verge-rev/clash-verge-rev/releases/download/updater-alpha/update-alpha.json"
+        "https://download.cgsss.com/https://github.com/cg3s/clash-max/releases/download/updater/update-proxy.json",
+        "https://gh-proxy.com/https://github.com/cg3s/clash-max/releases/download/updater/update-proxy.json",
+        "https://github.com/cg3s/clash-max/releases/download/updater/update.json",
+        "https://download.cgsss.com/https://github.com/cg3s/clash-max/releases/download/updater-alpha/update-alpha-proxy.json",
+        "https://gh-proxy.com/https://github.com/cg3s/clash-max/releases/download/updater-alpha/update-alpha-proxy.json",
+        "https://github.com/cg3s/clash-max/releases/download/updater-alpha/update-alpha.json"
       ],
       "windows": {
         "installMode": "basicUi"
@@ -44,7 +44,7 @@
     },
     "deep-link": {
       "desktop": {
-        "schemes": ["clash", "clash-verge"]
+        "schemes": ["clash", "clash-max"]
       }
     }
   },

@@ -9,6 +9,7 @@ import {
   useTheme,
   Link,
   keyframes,
+  IconButton
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import {
@@ -19,6 +20,7 @@ import {
   SpeedOutlined,
   EventOutlined,
   LaunchOutlined,
+  ChevronRight,
 } from "@mui/icons-material";
 import dayjs from "dayjs";
 import parseTraffic from "@/utils/parse-traffic";
@@ -202,17 +204,6 @@ const ProfileDetails = ({
 
         {current.extra && (
           <>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <SpeedOutlined fontSize="small" color="action" />
-              <Typography variant="body2" color="text.secondary">
-                {t("Used / Total")}:{" "}
-                <Box component="span" fontWeight="medium">
-                  {parseTraffic(usedTraffic)} /{" "}
-                  {parseTraffic(current.extra.total)}
-                </Box>
-              </Typography>
-            </Stack>
-
             {current.extra.expire > 0 && (
               <Stack direction="row" alignItems="center" spacing={1}>
                 <EventOutlined fontSize="small" color="action" />
@@ -224,6 +215,16 @@ const ProfileDetails = ({
                 </Typography>
               </Stack>
             )}
+
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <SpeedOutlined fontSize="small" color="action" />
+              <Typography variant="body2" color="text.secondary">
+                {t("Used / Total")}:{" "}
+                <Box component="span" fontWeight="medium">
+                  {parseTraffic(usedTraffic)} / {parseTraffic(current.extra.total)}
+                </Box>
+              </Typography>
+            </Stack>
 
             <Box sx={{ mt: 1 }}>
               <Typography
@@ -363,15 +364,13 @@ export const HomeProfileCard = ({
     if (!current) return null;
 
     return (
-      <Button
-        variant="outlined"
-        size="small"
-        onClick={goToProfiles}
-        endIcon={<StorageOutlined fontSize="small" />}
-        sx={{ borderRadius: 1.5 }}
-      >
-        {t("Label-Profiles")}
-      </Button>
+      <IconButton 
+        color="primary"
+        aria-label={t("Label-Profiles")}
+        size="large" 
+        onClick={goToProfiles}>
+        <ChevronRight fontSize="inherit" />
+      </IconButton>      
     );
   }, [current, goToProfiles, t]);
 
