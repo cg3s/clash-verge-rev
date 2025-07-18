@@ -443,7 +443,7 @@ impl CoreManager {
             child_guard.as_ref().map(|child| child.pid())
         };
 
-        let target_processes = ["verge-mihomo", "verge-mihomo-alpha"];
+        let target_processes = ["max-mihomo", "max-mihomo-alpha"];
 
         // 并行查找所有目标进程
         let mut process_futures = Vec::new();

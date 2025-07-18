@@ -27,8 +27,8 @@
       "./resources/clash-verge-service",
       "./resources/install-service",
       "./resources/uninstall-service",
-      "./sidecar/verge-mihomo",
-      "./sidecar/verge-mihomo-alpha"
+      "./sidecar/max-mihomo",
+      "./sidecar/max-mihomo-alpha"
     ]
   }
 }

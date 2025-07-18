@@ -175,8 +175,8 @@ function clashMetaAlpha() {
   const zipFile = `${name}-${META_ALPHA_VERSION}.${urlExt}`;
 
   return {
-    name: "verge-mihomo-alpha",
-    targetFile: `verge-mihomo-alpha-${SIDECAR_HOST}${isWin ? ".exe" : ""}`,
+    name: "max-mihomo-alpha",
+    targetFile: `max-mihomo-alpha-${SIDECAR_HOST}${isWin ? ".exe" : ""}`,
     exeFile,
     zipFile,
     downloadURL,
@@ -192,8 +192,8 @@ function clashMeta() {
   const zipFile = `${name}-${META_VERSION}.${urlExt}`;
 
   return {
-    name: "verge-mihomo",
-    targetFile: `verge-mihomo-${SIDECAR_HOST}${isWin ? ".exe" : ""}`,
+    name: "max-mihomo",
+    targetFile: `max-mihomo-${SIDECAR_HOST}${isWin ? ".exe" : ""}`,
     exeFile,
     zipFile,
     downloadURL,
@@ -489,13 +489,13 @@ const resolveWinSysproxy = () =>
 const tasks = [
   // { name: "clash", func: resolveClash, retry: 5 },
   {
-    name: "verge-mihomo-alpha",
+    name: "max-mihomo-alpha",
     func: () =>
       getLatestAlphaVersion().then(() => resolveSidecar(clashMetaAlpha())),
     retry: 5,
   },
   {
-    name: "verge-mihomo",
+    name: "max-mihomo",
     func: () =>
       getLatestReleaseVersion().then(() => resolveSidecar(clashMeta())),
     retry: 5,

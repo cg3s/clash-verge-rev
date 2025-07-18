@@ -278,7 +278,7 @@ const UnlockPage = () => {
       ) : (
         <Grid container spacing={1.5} columns={{ xs: 1, sm: 2, md: 3 }}>
           {unlockItems.map((item) => (
-            <Grid size={1}>
+            <Grid size={1} key={item.name}>
               <Card
                 variant="outlined"
                 sx={{

@@ -36,8 +36,8 @@ async function resolvePortable() {
   const zip = new AdmZip();
 
   zip.addLocalFile(path.join(releaseDir, "clash-max.exe"));
-  zip.addLocalFile(path.join(releaseDir, "verge-mihomo.exe"));
-  zip.addLocalFile(path.join(releaseDir, "verge-mihomo-alpha.exe"));
+  zip.addLocalFile(path.join(releaseDir, "max-mihomo.exe"));
+  zip.addLocalFile(path.join(releaseDir, "max-mihomo-alpha.exe"));
   zip.addLocalFolder(path.join(releaseDir, "resources"), "resources");
   zip.addLocalFolder(configDir, ".config");
 

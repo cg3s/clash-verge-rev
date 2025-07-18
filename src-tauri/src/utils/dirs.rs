@@ -17,7 +17,7 @@ pub static BACKUP_DIR: &str = "clash-max-backup-dev";
 pub static PORTABLE_FLAG: OnceCell<bool> = OnceCell::new();
 
 pub static CLASH_CONFIG: &str = "config.yaml";
-pub static VERGE_CONFIG: &str = "verge.yaml";
+pub static VERGE_CONFIG: &str = "max.yaml";
 pub static PROFILE_YAML: &str = "profiles.yaml";
 
 /// init portable flag
