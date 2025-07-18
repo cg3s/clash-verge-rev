@@ -428,19 +428,19 @@ Function .onInit
 FunctionEnd
 
 !macro CheckAllMaxProcesses
-  ; Check if clash-verge-service.exe is running
+  ; Check if clash-max-service.exe is running
   !if "${INSTALLMODE}" == "currentUser"
-    nsis_tauri_utils::FindProcessCurrentUser "clash-verge-service.exe"
+    nsis_tauri_utils::FindProcessCurrentUser "clash-max-service.exe"
   !else
-    nsis_tauri_utils::FindProcess "clash-verge-service.exe"
+    nsis_tauri_utils::FindProcess "clash-max-service.exe"
   !endif
   Pop $R0
   ${If} $R0 = 0
-    DetailPrint "Kill clash-verge-service.exe..."
+    DetailPrint "Kill clash-max-service.exe..."
     !if "${INSTALLMODE}" == "currentUser"
-      nsis_tauri_utils::KillProcessCurrentUser "clash-verge-service.exe"
+      nsis_tauri_utils::KillProcessCurrentUser "clash-max-service.exe"
     !else
-      nsis_tauri_utils::KillProcess "clash-verge-service.exe"
+      nsis_tauri_utils::KillProcess "clash-max-service.exe"
     !endif
   ${EndIf}
 
@@ -509,22 +509,22 @@ FunctionEnd
   ${EndIf}
 !macroend
 
-!macro StartVergeService
+!macro StartMaxService
   ; Check if the service exists
-  SimpleSC::ExistsService "clash_verge_service"
+  SimpleSC::ExistsService "clash_max_service"
   Pop $0  ; 0：service exists；other: service not exists
   ; Service exists
   ${If} $0 == 0
     Push $0
     ; Check if the service is running
-    SimpleSC::ServiceIsRunning "clash_verge_service"
+    SimpleSC::ServiceIsRunning "clash_max_service"
     Pop $0 ; returns an errorcode (<>0) otherwise success (0)
     Pop $1 ; returns 1 (service is running) - returns 0 (service is not running)
     ${If} $0 == 0
       Push $0
       ${If} $1 == 0
-            DetailPrint "Restart Clash Verge Service..."
-            SimpleSC::StartService "clash_verge_service" "" 30
+            DetailPrint "Restart Clash Max Service..."
+            SimpleSC::StartService "clash_max_service" "" 30
       ${EndIf}
     ${ElseIf} $0 != 0
           Push $0
@@ -535,35 +535,35 @@ FunctionEnd
   ${EndIf}
 !macroend
 
-!macro RemoveVergeService
+!macro RemoveMaxService
   ; Check if the service exists
-  SimpleSC::ExistsService "clash_verge_service"
+  SimpleSC::ExistsService "clash_max_service"
   Pop $0  ; 0：service exists；other: service not exists
   ; Service exists
   ${If} $0 == 0
     Push $0
     ; Check if the service is running
-    SimpleSC::ServiceIsRunning "clash_verge_service"
+    SimpleSC::ServiceIsRunning "clash_max_service"
     Pop $0 ; returns an errorcode (<>0) otherwise success (0)
     Pop $1 ; returns 1 (service is running) - returns 0 (service is not running)
     ${If} $0 == 0
       Push $0
       ${If} $1 == 1
-        DetailPrint "Stop Clash Verge Service..."
-        SimpleSC::StopService "clash_verge_service" 1 30
+        DetailPrint "Stop Clash Max Service..."
+        SimpleSC::StopService "clash_max_service" 1 30
         Pop $0 ; returns an errorcode (<>0) otherwise success (0)
         ${If} $0 == 0
-              DetailPrint "Removing Clash Verge Service..."
-              SimpleSC::RemoveService "clash_verge_service"
+              DetailPrint "Removing Clash Max Service..."
+              SimpleSC::RemoveService "clash_max_service"
         ${ElseIf} $0 != 0
                   Push $0
                   SimpleSC::GetErrorMessage
                   Pop $0
-                  MessageBox MB_OK|MB_ICONSTOP "Clash Verge Service Stop Error ($0)"
+                  MessageBox MB_OK|MB_ICONSTOP "Clash Max Service Stop Error ($0)"
         ${EndIf}
   ${ElseIf} $1 == 0
-        DetailPrint "Removing Clash Verge Service..."
-        SimpleSC::RemoveService "clash_verge_service"
+        DetailPrint "Removing Clash Max Service..."
+        SimpleSC::RemoveService "clash_max_service"
   ${EndIf}
     ${ElseIf} $0 != 0
           Push $0
@@ -774,7 +774,7 @@ Section Install
   StrCpy $R1 "Software\Microsoft\Windows\CurrentVersion\Run"
 
   SetRegView 64
-  ; 清理旧版本的注册表项 (Clash Verge)
+  ; 清理旧版本的注册表项 (Clash Max)
   ReadRegStr $R2 HKCU "$R1" "Clash Max"
   ${If} $R2 != ""
     DeleteRegValue HKCU "$R1" "Clash Max"
@@ -817,7 +817,7 @@ Section Install
     File /a "/oname={{this}}" "{{@key}}"
   {{/each}}
 
-  !insertmacro StartVergeService
+  !insertmacro StartMaxService
 
   ; Create uninstaller
   WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -921,7 +921,7 @@ Section Uninstall
 
   !insertmacro CheckIfAppIsRunning
   !insertmacro CheckAllMaxProcesses
-  !insertmacro RemoveVergeService
+  !insertmacro RemoveMaxService
 
   ; 删除 window-state.json 文件 .window-state.json 文件
   DetailPrint "开始删除删除 window-state.json or .window-state.json"

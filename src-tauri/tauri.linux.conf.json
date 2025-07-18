@@ -24,7 +24,7 @@
       }
     },
     "externalBin": [
-      "./resources/clash-verge-service",
+      "./resources/clash-max-service",
       "./resources/install-service",
       "./resources/uninstall-service",
       "./sidecar/max-mihomo",

@@ -1029,9 +1029,9 @@ pub async fn force_reinstall_service() -> Result<()> {
 
     // 2. 检查IPC通信 - 命名管道/Unix套接字
     let socket_path = if cfg!(windows) {
-        r"\\.\pipe\clash-verge-service"
+        r"\\.\pipe\clash-max-service"
     } else {
-        "/tmp/clash-verge-service.sock"
+        "/tmp/clash-max-service.sock"
     };
 
     logging!(info, Type::Service, true, "IPC通信路径: {}", socket_path);
@@ -1079,7 +1079,7 @@ pub async fn force_reinstall_service() -> Result<()> {
                 logging!(info, Type::Service, true, "尝试检查Windows服务状态...");
 
                 let output = Command::new("sc")
-                    .args(["query", "clash_verge_service"])
+                    .args(["query", "clash_max_service"])
                     .output();
 
                 match output {
@@ -1138,7 +1138,7 @@ pub async fn force_reinstall_service() -> Result<()> {
                 logging!(info, Type::Service, true, "尝试检查Linux服务状态...");
 
                 let output = Command::new("systemctl")
-                    .args(["status", "clash_verge_service"])
+                    .args(["status", "clash_max_service"])
                     .output();
 
                 match output {

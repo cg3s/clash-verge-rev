@@ -381,7 +381,7 @@ const resolvePlugin = async () => {
 // service chmod
 const resolveServicePermission = async () => {
   const serviceExecutables = [
-    "clash-verge-service*",
+    "clash-max-service*",
     "install-service*",
     "uninstall-service*",
   ];
@@ -429,14 +429,14 @@ async function resolveLocales() {
 /**
  * main
  */
-const SERVICE_URL = `https://github.com/clash-verge-rev/clash-verge-service/releases/download/${SIDECAR_HOST}`;
+const SERVICE_URL = `https://github.com/cg3s/clash-max-service/releases/download/${SIDECAR_HOST}`;
 
 const resolveService = () => {
   let ext = platform === "win32" ? ".exe" : "";
   let suffix = platform === "linux" ? "-" + SIDECAR_HOST : "";
   resolveResource({
-    file: "clash-verge-service" + suffix + ext,
-    downloadURL: `${SERVICE_URL}/clash-verge-service${ext}`,
+    file: "clash-max-service" + suffix + ext,
+    downloadURL: `${SERVICE_URL}/clash-max-service${ext}`,
   });
 };
 

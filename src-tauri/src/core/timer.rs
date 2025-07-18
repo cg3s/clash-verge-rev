@@ -420,7 +420,7 @@ impl Timer {
 
     /// Emit update events for frontend notification
     fn emit_update_event(_uid: &str, _is_start: bool) {
-        #[cfg(any(feature = "verge-dev", feature = "default"))]
+        #[cfg(any(feature = "max-dev", feature = "default"))]
         {
             if _is_start {
                 super::handle::Handle::notify_profile_update_started(_uid.to_string());

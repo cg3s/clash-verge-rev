@@ -495,9 +495,9 @@ impl IVerge {
 
     /// 在初始化前尝试拿到单例端口的值
     pub fn get_singleton_port() -> u16 {
-        #[cfg(not(feature = "verge-dev"))]
+        #[cfg(not(feature = "max-dev"))]
         const SERVER_PORT: u16 = 33331;
-        #[cfg(feature = "verge-dev")]
+        #[cfg(feature = "max-dev")]
         const SERVER_PORT: u16 = 11233;
         SERVER_PORT
     }

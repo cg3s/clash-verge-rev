@@ -4,14 +4,14 @@ use once_cell::sync::OnceCell;
 use std::{fs, path::PathBuf};
 use tauri::Manager;
 
-#[cfg(not(feature = "verge-dev"))]
+#[cfg(not(feature = "max-dev"))]
 pub static APP_ID: &str = "cg3s.clash-max";
-#[cfg(not(feature = "verge-dev"))]
+#[cfg(not(feature = "max-dev"))]
 pub static BACKUP_DIR: &str = "clash-max-backup";
 
-#[cfg(feature = "verge-dev")]
+#[cfg(feature = "max-dev")]
 pub static APP_ID: &str = "cg3s.clash-max.dev";
-#[cfg(feature = "verge-dev")]
+#[cfg(feature = "max-dev")]
 pub static BACKUP_DIR: &str = "clash-max-backup-dev";
 
 pub static PORTABLE_FLAG: OnceCell<bool> = OnceCell::new();
@@ -188,13 +188,13 @@ pub fn profiles_path() -> Result<PathBuf> {
 #[cfg(target_os = "macos")]
 pub fn service_path() -> Result<PathBuf> {
     let res_dir = app_resources_dir()?;
-    Ok(res_dir.join("clash-verge-service"))
+    Ok(res_dir.join("clash-max-service"))
 }
 
 #[cfg(windows)]
 pub fn service_path() -> Result<PathBuf> {
     let res_dir = app_resources_dir()?;
-    Ok(res_dir.join("clash-verge-service.exe"))
+    Ok(res_dir.join("clash-max-service.exe"))
 }
 
 pub fn service_log_file() -> Result<PathBuf> {

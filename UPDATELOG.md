@@ -1190,7 +1190,7 @@
 
 ### Bugs Fixes
 
-- Windows 下更新时无法覆盖`clash-verge-service.exe`的问题(需要卸载重装一次服务，下次更新生效)
+- Windows 下更新时无法覆盖`clash-max-service.exe`的问题(需要卸载重装一次服务，下次更新生效)
 - 窗口最大化按钮变化问题
 - 窗口尺寸保存错误问题
 - 复制环境变量类型无法切换问题

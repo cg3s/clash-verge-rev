@@ -286,7 +286,7 @@ pub fn init_config() -> Result<()> {
         <Result<()>>::Ok(())
     }));
 
-    // 验证并修正max.yaml中的clash_core配置
+    // 验证并修正verge.yaml中的clash_core配置
     crate::log_err!(IVerge::validate_and_fix_config());
 
     crate::log_err!(dirs::profiles_path().map(|path| {
