@@ -539,7 +539,7 @@ const Layout = () => {
           ]}
         >
           <div className="layout__left">
-            {/* <div className="the-logo" data-tauri-drag-region="true">
+            <div className="the-logo" data-tauri-drag-region="true">
               <div
                 data-tauri-drag-region="true"
                 style={{
@@ -562,7 +562,7 @@ const Layout = () => {
                 <LogoSvg fill={isDark ? "white" : "black"} />
               </div>
               <UpdateButton className="the-newbtn" />
-            </div> */}
+            </div>
 
             <List className="the-menu">
               {routers.map((router) => (
