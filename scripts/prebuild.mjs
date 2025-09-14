@@ -483,7 +483,7 @@ const resolveEnableLoopback = () =>
 const resolveWinSysproxy = () =>
   resolveResource({
     file: "sysproxy.exe",
-    downloadURL: `https://github.com/cg3s/sysproxy/releases/download/${arch}/sysproxy.exe`,
+    downloadURL: `https://github.com/clash-verge-rev/sysproxy/releases/download/${arch}/sysproxy.exe`,
   });
 
 const tasks = [
