@@ -22,7 +22,7 @@ import {
   DnsOutlined,
   SpeedOutlined,
   HelpOutlineRounded,
-  HistoryEduOutlined,
+  BrandingWatermarkOutlined,
 } from "@mui/icons-material";
 import { ProxyTunCard } from "@/components/home/proxy-tun-card";
 import { ClashModeCard } from "@/components/home/clash-mode-card";
@@ -328,7 +328,7 @@ export const HomePage = () => {
               size="small"
               color="inherit"
             >
-              <HistoryEduOutlined />
+              <BrandingWatermarkOutlined />
             </IconButton>
           </Tooltip>
           <Tooltip title={t("Manual")} arrow>

@@ -105,7 +105,7 @@ jobs:
           - [64位](${{ env.DOWNLOAD_URL }}/Clash.Verge_${{ env.VERSION }}_amd64.rpm) | [ARM64](${{ env.DOWNLOAD_URL }}/Clash.Verge_${{ env.VERSION }}_aarch64.rpm) | [ARMv7](${{ env.DOWNLOAD_URL }}/Clash.Verge_${{ env.VERSION }}_armhfp.rpm)
 
           ### FAQ
-          - [常见问题](https://clash-verge-rev.github.io/faq/windows.html)
+          - [常见问题](https://cg3s.github.io/faq/windows.html)
 
           Created at ${{ env.BUILDTIME }}.
           EOF

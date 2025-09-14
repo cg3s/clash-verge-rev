@@ -527,14 +527,13 @@ export const CurrentProxyCard = () => {
               {getSortIcon()}
             </IconButton>
           </Tooltip>
-
           <IconButton 
             color="primary"
-            aria-label={t("Label-Proxies")}
+            aria-label={t("Label-Profiles")}
             size="large" 
             onClick={goToProxies}>
             <ChevronRight fontSize="inherit" />
-          </IconButton>
+          </IconButton>            
         </Box>
       }
     >

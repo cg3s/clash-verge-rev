@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Box, Button, IconButton, MenuItem } from "@mui/material";
+import { Box, Button, MenuItem } from "@mui/material";
 import { Virtuoso } from "react-virtuoso";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "foxact/use-local-storage";

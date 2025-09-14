@@ -4,8 +4,6 @@ import {
   ArrowDownwardRounded,
   ArrowUpwardRounded,
   MemoryRounded,
-  CloudUploadRounded,
-  CloudDownloadRounded
 } from "@mui/icons-material";
 import { useClashInfo } from "@/hooks/use-clash";
 import { useVerge } from "@/hooks/use-verge";

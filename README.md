@@ -60,7 +60,6 @@ Supports Windows (x64/x86), Linux (x64/arm64) and macOS 10.15+ (intel/apple).
 
 Refer to [Doc FAQ Page](https://clash-verge-rev.github.io/faq/windows.html)
 
-
 ## Development
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for more details.
