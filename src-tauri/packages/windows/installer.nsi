@@ -523,11 +523,7 @@ FunctionEnd
     ${If} $0 == 0
       Push $0
       ${If} $1 == 0
-<<<<<<< HEAD
             DetailPrint "Restart ${PRODUCTNAME} Service..."
-=======
-            DetailPrint "Restart Clash Max Service..."
->>>>>>> ea1e3f45310f5931eddc6c9f6d314ced652a6c0e
             SimpleSC::StartService "clash_max_service" "" 30
       ${EndIf}
     ${ElseIf} $0 != 0
@@ -553,35 +549,20 @@ FunctionEnd
     ${If} $0 == 0
       Push $0
       ${If} $1 == 1
-<<<<<<< HEAD
         DetailPrint "Stop ${PRODUCTNAME} Service..."
         SimpleSC::StopService "clash_max_service" 1 30
         Pop $0 ; returns an errorcode (<>0) otherwise success (0)
         ${If} $0 == 0
               DetailPrint "Removing ${PRODUCTNAME} Service..."
-=======
-        DetailPrint "Stop Clash Max Service..."
-        SimpleSC::StopService "clash_max_service" 1 30
-        Pop $0 ; returns an errorcode (<>0) otherwise success (0)
-        ${If} $0 == 0
-              DetailPrint "Removing Clash Max Service..."
->>>>>>> ea1e3f45310f5931eddc6c9f6d314ced652a6c0e
               SimpleSC::RemoveService "clash_max_service"
         ${ElseIf} $0 != 0
                   Push $0
                   SimpleSC::GetErrorMessage
                   Pop $0
-<<<<<<< HEAD
                   MessageBox MB_OK|MB_ICONSTOP "${PRODUCTNAME} Service Stop Error ($0)"
         ${EndIf}
   ${ElseIf} $1 == 0
         DetailPrint "Removing ${PRODUCTNAME} Service..."
-=======
-                  MessageBox MB_OK|MB_ICONSTOP "Clash Max Service Stop Error ($0)"
-        ${EndIf}
-  ${ElseIf} $1 == 0
-        DetailPrint "Removing Clash Max Service..."
->>>>>>> ea1e3f45310f5931eddc6c9f6d314ced652a6c0e
         SimpleSC::RemoveService "clash_max_service"
   ${EndIf}
     ${ElseIf} $0 != 0
@@ -1048,11 +1029,7 @@ Section Uninstall
       Delete "$R4\Clash Max.lnk"
       Delete "$R4\clash-max.lnk"
 
-<<<<<<< HEAD
       DetailPrint "尝试删除用户 '$R3' 桌面的 ${PRODUCTNAME} 快捷方式"
-=======
-      DetailPrint "尝试删除用户 '$R3' 桌面的 Clash Max 快捷方式"
->>>>>>> ea1e3f45310f5931eddc6c9f6d314ced652a6c0e
     ${EndIf}
 
     ; 递增循环计数器
@@ -1068,7 +1045,6 @@ Section Uninstall
   RMDir /r /REBOOTOK "$SMPROGRAMS\clash-max"
   DetailPrint "删除用户级开始菜单中的应用程序文件夹和快捷方式完成"
 
-<<<<<<< HEAD
   ; 删除系统级开始菜单中的应用程序文件夹和快捷方式
   DetailPrint "删除系统级开始菜单中的应用程序文件夹和快捷方式..."
   RMDir /r /REBOOTOK "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Max"
@@ -1077,15 +1053,6 @@ Section Uninstall
 
   ; 删除所有带 Clash Max 或 clash-max 的注册表项
   DetailPrint "开始清理所有 ${PRODUCTNAME} 相关的注册表项..."
-=======
-  ; 删除系统级开始菜单中的 Clash Max
-  Delete "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Max\Clash Max.lnk"
-  Delete "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Max\clash-max.lnk"
-  RMDir /r /REBOOTOK "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Max"
-
-  ; 删除所有带 Clash Max 或 clash-max 的注册表项
-  DetailPrint "开始清理所有 Clash Max 相关的注册表项..."
->>>>>>> ea1e3f45310f5931eddc6c9f6d314ced652a6c0e
 
   ; 设置注册表查看模式 (64位)
   SetRegView 64
@@ -1102,13 +1069,8 @@ Section Uninstall
   DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\clash-max.exe"
 
   ; 删除指定的注册表路径
-<<<<<<< HEAD
   DeleteRegKey HKLM "Software\Clash Max Rev"
   DeleteRegKey HKCU "Software\Clash Max Rev"
-=======
-  DeleteRegKey HKLM "Software\Clash Max"
-  DeleteRegKey HKCU "Software\Clash Max"
->>>>>>> ea1e3f45310f5931eddc6c9f6d314ced652a6c0e
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ClashMax"
   DeleteRegKey HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Clash Max"
 
