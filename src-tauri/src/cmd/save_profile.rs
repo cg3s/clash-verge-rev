@@ -6,7 +6,7 @@ use crate::{
     utils::{dirs, logging::Type},
     wrap_err,
 };
-use std::fs;
+use tokio::fs;
 
 /// 保存profiles的配置
 #[tauri::command]
@@ -17,7 +17,7 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
 
     // 在异步操作前完成所有文件操作
     let (file_path, original_content, is_merge_file) = {
-        let profiles = Config::profiles();
+        let profiles = Config::profiles().await;
         let profiles_guard = profiles.latest_ref();
         let item = wrap_err!(profiles_guard.get_item(&index))?;
         // 确定是否为merge类型文件
@@ -29,7 +29,8 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
     };
 
     // 保存新的配置文件
-    wrap_err!(fs::write(&file_path, file_data.clone().unwrap()))?;
+    let file_data = file_data.ok_or("file_data is None")?;
+    wrap_err!(fs::write(&file_path, &file_data).await)?;
 
     let file_path_str = file_path.to_string_lossy().to_string();
     logging!(
@@ -61,14 +62,20 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
                     "[cmd配置save] merge文件语法验证通过"
                 );
                 // 成功后尝试更新整体配置
-                if let Err(e) = CoreManager::global().update_config().await {
-                    logging!(
-                        warn,
-                        Type::Config,
-                        true,
-                        "[cmd配置save] 更新整体配置时发生错误: {}",
-                        e
-                    );
+                match CoreManager::global().update_config().await {
+                    Ok(_) => {
+                        // 配置更新成功，刷新前端
+                        handle::Handle::refresh_clash();
+                    }
+                    Err(e) => {
+                        logging!(
+                            warn,
+                            Type::Config,
+                            true,
+                            "[cmd配置save] 更新整体配置时发生错误: {}",
+                            e
+                        );
+                    }
                 }
                 return Ok(());
             }
@@ -81,7 +88,7 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
                     error_msg
                 );
                 // 恢复原始配置文件
-                wrap_err!(fs::write(&file_path, original_content))?;
+                wrap_err!(fs::write(&file_path, original_content).await)?;
                 // 发送合并文件专用错误通知
                 let result = (false, error_msg.clone());
                 crate::cmd::validate::handle_yaml_validation_notice(&result, "合并配置文件");
@@ -96,7 +103,7 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
                     e
                 );
                 // 恢复原始配置文件
-                wrap_err!(fs::write(&file_path, original_content))?;
+                wrap_err!(fs::write(&file_path, original_content).await)?;
                 return Err(e.to_string());
             }
         }
@@ -120,7 +127,7 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
                 error_msg
             );
             // 恢复原始配置文件
-            wrap_err!(fs::write(&file_path, original_content))?;
+            wrap_err!(fs::write(&file_path, original_content).await)?;
 
             // 智能判断错误类型
             let is_script_error = file_path_str.ends_with(".js")
@@ -133,17 +140,29 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
                 || (!file_path_str.ends_with(".js") && !is_script_error)
             {
                 // 普通YAML错误使用YAML通知处理
-                log::info!(target: "app", "[cmd配置save] YAML配置文件验证失败，发送通知");
+                logging!(
+                    info,
+                    Type::Config,
+                    "[cmd配置save] YAML配置文件验证失败，发送通知"
+                );
                 let result = (false, error_msg.clone());
                 crate::cmd::validate::handle_yaml_validation_notice(&result, "YAML配置文件");
             } else if is_script_error {
                 // 脚本错误使用专门的通知处理
-                log::info!(target: "app", "[cmd配置save] 脚本文件验证失败，发送通知");
+                logging!(
+                    info,
+                    Type::Config,
+                    "[cmd配置save] 脚本文件验证失败，发送通知"
+                );
                 let result = (false, error_msg.clone());
                 crate::cmd::validate::handle_script_validation_notice(&result, "脚本文件");
             } else {
                 // 普通配置错误使用一般通知
-                log::info!(target: "app", "[cmd配置save] 其他类型验证失败，发送一般通知");
+                logging!(
+                    info,
+                    Type::Config,
+                    "[cmd配置save] 其他类型验证失败，发送一般通知"
+                );
                 handle::Handle::notice_message("config_validate::error", &error_msg);
             }
 
@@ -158,7 +177,7 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
                 e
             );
             // 恢复原始配置文件
-            wrap_err!(fs::write(&file_path, original_content))?;
+            wrap_err!(fs::write(&file_path, original_content).await)?;
             Err(e.to_string())
         }
     }

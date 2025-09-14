@@ -14,11 +14,10 @@ import {
   Divider,
   alpha,
   styled,
-  useTheme,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useLockFn } from "ahooks";
-import { ruleProviderUpdate } from "@/services/api";
+import { ruleProviderUpdate } from "@/services/cmds";
 import { StorageOutlined, RefreshRounded } from "@mui/icons-material";
 import { useAppData } from "@/providers/app-data-provider";
 import dayjs from "dayjs";
@@ -47,7 +46,6 @@ const TypeBox = styled(Box)<{ component?: React.ElementType }>(({ theme }) => ({
 
 export const ProviderButton = () => {
   const { t } = useTranslation();
-  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const { ruleProviders, refreshRules, refreshRuleProviders } = useAppData();
   const [updating, setUpdating] = useState<Record<string, boolean>>({});

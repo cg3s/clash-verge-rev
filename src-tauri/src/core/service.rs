@@ -1,10 +1,10 @@
 use crate::{
     config::Config,
-    core::service_ipc::{send_ipc_request, IpcCommand},
+    core::service_ipc::{IpcCommand, send_ipc_request},
     logging,
     utils::{dirs, logging::Type},
 };
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
 use std::{
     env::current_exe,
@@ -13,7 +13,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-const REQUIRED_SERVICE_VERSION: &str = "1.1.0"; // 定义所需的服务版本号
+const REQUIRED_SERVICE_VERSION: &str = "1.1.2"; // 定义所需的服务版本号
 
 // 限制重装时间和次数的常量
 const REINSTALL_COOLDOWN_SECS: u64 = 300; // 5分钟冷却期
@@ -31,22 +31,26 @@ pub struct ServiceState {
 
 impl ServiceState {
     // 获取当前的服务状态
-    pub fn get() -> Self {
-        if let Some(state) = Config::verge().latest_ref().service_state.clone() {
+    pub async fn get() -> Self {
+        if let Some(state) = Config::verge().await.latest_ref().service_state.clone() {
             return state;
         }
         Self::default()
     }
 
     // 保存服务状态
-    pub fn save(&self) -> Result<()> {
-        let config = Config::verge();
+    pub async fn save(&self) -> Result<()> {
+        let config = Config::verge().await;
         let mut latest = config.latest_ref().clone();
         latest.service_state = Some(self.clone());
         *config.draft_mut() = latest;
         config.apply();
-        let result = config.latest_ref().save_file();
-        result
+
+        // 先获取数据，再异步保存，避免跨await持有锁
+        let verge_data = config.latest_ref().clone();
+        drop(config); // 显式释放锁
+
+        verge_data.save_file().await
     }
 
     // 更新安装信息
@@ -138,7 +142,7 @@ pub async fn uninstall_service() -> Result<()> {
     if !status.success() {
         bail!(
             "failed to uninstall service with status {}",
-            status.code().unwrap()
+            status.code().unwrap_or(-1)
         );
     }
 
@@ -172,7 +176,7 @@ pub async fn install_service() -> Result<()> {
     if !status.success() {
         bail!(
             "failed to install service with status {}",
-            status.code().unwrap()
+            status.code().unwrap_or(-1)
         );
     }
 
@@ -184,7 +188,7 @@ pub async fn reinstall_service() -> Result<()> {
     logging!(info, Type::Service, true, "reinstall service");
 
     // 获取当前服务状态
-    let mut service_state = ServiceState::get();
+    let mut service_state = ServiceState::get().await;
 
     // 检查是否允许重装
     if !service_state.can_reinstall() {
@@ -214,19 +218,20 @@ pub async fn reinstall_service() -> Result<()> {
             // 记录安装信息并保存
             service_state.record_install();
             service_state.last_error = None;
-            service_state.save()?;
+            service_state.save().await?;
             Ok(())
         }
         Err(err) => {
             let error = format!("failed to install service: {err}");
             service_state.last_error = Some(error.clone());
             service_state.prefer_sidecar = true;
-            service_state.save()?;
+            service_state.save().await?;
             bail!(error)
         }
     }
 }
 
+#[allow(clippy::unused_async)]
 #[cfg(target_os = "linux")]
 pub async fn uninstall_service() -> Result<()> {
     logging!(info, Type::Service, true, "uninstall service");
@@ -254,13 +259,13 @@ pub async fn uninstall_service() -> Result<()> {
         Type::Service,
         true,
         "uninstall status code:{}",
-        status.code().unwrap()
+        status.code().unwrap_or(-1)
     );
 
     if !status.success() {
         bail!(
             "failed to uninstall service with status {}",
-            status.code().unwrap()
+            status.code().unwrap_or(-1)
         );
     }
 
@@ -294,13 +299,13 @@ pub async fn install_service() -> Result<()> {
         Type::Service,
         true,
         "install status code:{}",
-        status.code().unwrap()
+        status.code().unwrap_or(-1)
     );
 
     if !status.success() {
         bail!(
             "failed to install service with status {}",
-            status.code().unwrap()
+            status.code().unwrap_or(-1)
         );
     }
 
@@ -312,7 +317,7 @@ pub async fn reinstall_service() -> Result<()> {
     logging!(info, Type::Service, true, "reinstall service");
 
     // 获取当前服务状态
-    let mut service_state = ServiceState::get();
+    let mut service_state = ServiceState::get().await;
 
     // 检查是否允许重装
     if !service_state.can_reinstall() {
@@ -342,14 +347,14 @@ pub async fn reinstall_service() -> Result<()> {
             // 记录安装信息并保存
             service_state.record_install();
             service_state.last_error = None;
-            service_state.save()?;
+            service_state.save().await?;
             Ok(())
         }
         Err(err) => {
             let error = format!("failed to install service: {err}");
             service_state.last_error = Some(error.clone());
             service_state.prefer_sidecar = true;
-            service_state.save()?;
+            service_state.save().await?;
             bail!(error)
         }
     }
@@ -370,7 +375,7 @@ pub async fn uninstall_service() -> Result<()> {
 
     let uninstall_shell: String = uninstall_path.to_string_lossy().into_owned();
 
-    let prompt = t("Service Administrator Prompt");
+    let prompt = t("Service Administrator Prompt").await;
     let command = format!(
         r#"do shell script "sudo '{uninstall_shell}'" with administrator privileges with prompt "{prompt}""#
     );
@@ -384,7 +389,7 @@ pub async fn uninstall_service() -> Result<()> {
     if !status.success() {
         bail!(
             "failed to uninstall service with status {}",
-            status.code().unwrap()
+            status.code().unwrap_or(-1)
         );
     }
 
@@ -406,7 +411,7 @@ pub async fn install_service() -> Result<()> {
 
     let install_shell: String = install_path.to_string_lossy().into_owned();
 
-    let prompt = t("Service Administrator Prompt");
+    let prompt = t("Service Administrator Prompt").await;
     let command = format!(
         r#"do shell script "sudo '{install_shell}'" with administrator privileges with prompt "{prompt}""#
     );
@@ -420,7 +425,7 @@ pub async fn install_service() -> Result<()> {
     if !status.success() {
         bail!(
             "failed to install service with status {}",
-            status.code().unwrap()
+            status.code().unwrap_or(-1)
         );
     }
 
@@ -432,7 +437,7 @@ pub async fn reinstall_service() -> Result<()> {
     logging!(info, Type::Service, true, "reinstall service");
 
     // 获取当前服务状态
-    let mut service_state = ServiceState::get();
+    let mut service_state = ServiceState::get().await;
 
     // 检查是否允许重装
     if !service_state.can_reinstall() {
@@ -462,14 +467,14 @@ pub async fn reinstall_service() -> Result<()> {
             // 记录安装信息并保存
             service_state.record_install();
             service_state.last_error = None;
-            service_state.save()?;
+            service_state.save().await?;
             Ok(())
         }
         Err(err) => {
             let error = format!("failed to install service: {err}");
             service_state.last_error = Some(error.clone());
             service_state.prefer_sidecar = true;
-            service_state.save()?;
+            service_state.save().await?;
             bail!(error)
         }
     }
@@ -612,17 +617,11 @@ pub async fn check_service_version() -> Result<String> {
             match response.data {
                 Some(data) => {
                     if let Some(nested_data) = data.get("data") {
-                        if let Some(version) = nested_data.get("version") {
-                            if let Some(version_str) = version.as_str() {
-                                logging!(
-                                    info,
-                                    Type::Service,
-                                    true,
-                                    "获取到服务版本: {}",
-                                    version_str
-                                );
-                                return Ok(version_str.to_string());
-                            }
+                        if let Some(version) = nested_data.get("version")
+                            && let Some(version_str) = version.as_str()
+                        {
+                            logging!(info, Type::Service, true, "获取到服务版本: {}", version_str);
+                            return Ok(version_str.to_string());
                         }
                         logging!(
                             error,
@@ -676,7 +675,7 @@ pub async fn check_service_version() -> Result<String> {
 pub async fn check_service_needs_reinstall() -> bool {
     logging!(info, Type::Service, true, "开始检查服务是否需要重装");
 
-    let service_state = ServiceState::get();
+    let service_state = ServiceState::get().await;
 
     if !service_state.can_reinstall() {
         log::info!(target: "app", "服务重装检查: 处于冷却期或已达最大尝试次数");
@@ -741,7 +740,7 @@ pub(super) async fn start_with_existing_service(config_file: &PathBuf) -> Result
     log::info!(target:"app", "尝试使用现有服务启动核心 (IPC)");
     // logging!(info, Type::Service, true, "尝试使用现有服务启动核心");
 
-    let clash_core = Config::verge().latest_ref().get_valid_clash_core();
+    let clash_core = Config::verge().await.latest_ref().get_valid_clash_core();
 
     let bin_ext = if cfg!(windows) { ".exe" } else { "" };
     let clash_bin = format!("{clash_core}{bin_ext}");
@@ -787,25 +786,25 @@ pub(super) async fn start_with_existing_service(config_file: &PathBuf) -> Result
             }
 
             // 添加对嵌套JSON结构的处理
-            if let Some(data) = &response.data {
-                if let Some(code) = data.get("code") {
-                    let code_value = code.as_u64().unwrap_or(1);
-                    let msg = data
-                        .get("msg")
-                        .and_then(|m| m.as_str())
-                        .unwrap_or("未知错误");
+            if let Some(data) = &response.data
+                && let Some(code) = data.get("code")
+            {
+                let code_value = code.as_u64().unwrap_or(1);
+                let msg = data
+                    .get("msg")
+                    .and_then(|m| m.as_str())
+                    .unwrap_or("未知错误");
 
-                    if code_value != 0 {
-                        logging!(
-                            error,
-                            Type::Service,
-                            true,
-                            "启动核心返回错误: code={}, msg={}",
-                            code_value,
-                            msg
-                        );
-                        bail!("启动核心失败: {}", msg);
-                    }
+                if code_value != 0 {
+                    logging!(
+                        error,
+                        Type::Service,
+                        true,
+                        "启动核心返回错误: code={}, msg={}",
+                        code_value,
+                        msg
+                    );
+                    bail!("启动核心失败: {}", msg);
                 }
             }
 
@@ -850,23 +849,20 @@ pub(super) async fn run_core_by_service(config_file: &PathBuf) -> Result<()> {
     if !version_check {
         log::info!(target: "app", "服务版本不匹配，尝试重装");
 
-        let service_state = ServiceState::get();
+        let service_state = ServiceState::get().await;
         if !service_state.can_reinstall() {
             log::warn!(target: "app", "由于限制无法重装服务");
             if let Ok(()) = start_with_existing_service(config_file).await {
                 log::info!(target: "app", "尽管版本不匹配，但成功启动了服务");
                 return Ok(());
-            } else {
-                bail!("服务版本不匹配且无法重装，启动失败");
             }
+            bail!("服务版本不匹配且无法重装，启动失败");
         }
 
         log::info!(target: "app", "开始重装服务");
         if let Err(err) = reinstall_service().await {
             log::warn!(target: "app", "服务重装失败: {err}");
-
-            log::info!(target: "app", "尝试使用现有服务");
-            return start_with_existing_service(config_file).await;
+            bail!("Failed to reinstall service: {}", err);
         }
 
         log::info!(target: "app", "服务重装成功，尝试启动");
@@ -916,25 +912,25 @@ pub(super) async fn stop_core_by_service() -> Result<()> {
         bail!(response.error.unwrap_or_else(|| "停止核心失败".to_string()));
     }
 
-    if let Some(data) = &response.data {
-        if let Some(code) = data.get("code") {
-            let code_value = code.as_u64().unwrap_or(1);
-            let msg = data
-                .get("msg")
-                .and_then(|m| m.as_str())
-                .unwrap_or("未知错误");
+    if let Some(data) = &response.data
+        && let Some(code) = data.get("code")
+    {
+        let code_value = code.as_u64().unwrap_or(1);
+        let msg = data
+            .get("msg")
+            .and_then(|m| m.as_str())
+            .unwrap_or("未知错误");
 
-            if code_value != 0 {
-                logging!(
-                    error,
-                    Type::Service,
-                    true,
-                    "停止核心返回错误: code={}, msg={}",
-                    code_value,
-                    msg
-                );
-                bail!("停止核心失败: {}", msg);
-            }
+        if code_value != 0 {
+            logging!(
+                error,
+                Type::Service,
+                true,
+                "停止核心返回错误: code={}, msg={}",
+                code_value,
+                msg
+            );
+            bail!("停止核心失败: {}", msg);
         }
     }
 
@@ -974,7 +970,7 @@ pub async fn force_reinstall_service() -> Result<()> {
     log::info!(target: "app", "用户请求强制重装服务");
 
     let service_state = ServiceState::default();
-    service_state.save()?;
+    service_state.save().await?;
 
     log::info!(target: "app", "已重置服务状态，开始执行重装");
 
@@ -989,178 +985,3 @@ pub async fn force_reinstall_service() -> Result<()> {
         }
     }
 }
-/*
-/// 彻底诊断服务状态，检查安装状态、IPC通信和服务版本
- pub async fn diagnose_service() -> Result<()> {
-    logging!(info, Type::Service, true, "============= 开始服务诊断 =============");
-
-    // 1. 检查服务文件是否存在
-    let service_path = dirs::service_path();
-    match service_path {
-        Ok(path) => {
-            let service_exists = path.exists();
-            logging!(info, Type::Service, true, "服务可执行文件路径: {:?}, 存在: {}", path, service_exists);
-
-            if !service_exists {
-                logging!(error, Type::Service, true, "服务可执行文件不存在，需要重新安装");
-                bail!("服务可执行文件不存在，需要重新安装");
-            }
-
-            // 检查服务版本文件
-            let version_file = path.with_file_name("version.txt");
-            if version_file.exists() {
-                match std::fs::read_to_string(&version_file) {
-                    Ok(content) => {
-                        logging!(info, Type::Service, true, "服务版本文件内容: {}", content.trim());
-                    }
-                    Err(e) => {
-                        logging!(warn, Type::Service, true, "读取服务版本文件失败: {}", e);
-                    }
-                }
-            } else {
-                logging!(warn, Type::Service, true, "服务版本文件不存在: {:?}", version_file);
-            }
-        }
-        Err(e) => {
-            logging!(error, Type::Service, true, "获取服务路径失败: {}", e);
-            bail!("获取服务路径失败: {}", e);
-        }
-    }
-
-    // 2. 检查IPC通信 - 命名管道/Unix套接字
-    let socket_path = if cfg!(windows) {
-        r"\\.\pipe\clash-max-service"
-    } else {
-        "/tmp/clash-max-service.sock"
-    };
-
-    logging!(info, Type::Service, true, "IPC通信路径: {}", socket_path);
-
-    if !cfg!(windows) {
-        // Unix系统检查套接字文件是否存在
-        let socket_exists = std::path::Path::new(socket_path).exists();
-        logging!(info, Type::Service, true, "Unix套接字文件是否存在: {}", socket_exists);
-
-        if !socket_exists {
-            logging!(warn, Type::Service, true, "Unix套接字文件不存在，服务可能未运行");
-        }
-    }
-
-    // 3. 尝试通过IPC检查服务状态
-    logging!(info, Type::Service, true, "尝试通过IPC通信检查服务状态...");
-    match check_service().await {
-        Ok(resp) => {
-            logging!(info, Type::Service, true, "服务状态检查成功: code={}, msg={}", resp.code, resp.msg);
-
-            // 4. 检查服务版本
-            match check_service_version().await {
-                Ok(version) => {
-                    logging!(info, Type::Service, true, "服务版本: {}, 要求版本: {}",
-                        version, REQUIRED_SERVICE_VERSION);
-
-                    if version != REQUIRED_SERVICE_VERSION {
-                        logging!(warn, Type::Service, true, "服务版本不匹配，建议重装服务");
-                    } else {
-                        logging!(info, Type::Service, true, "服务版本匹配");
-                    }
-                }
-                Err(err) => {
-                    logging!(error, Type::Service, true, "检查服务版本失败: {}", err);
-                }
-            }
-        }
-        Err(err) => {
-            logging!(error, Type::Service, true, "服务状态检查失败: {}", err);
-
-            // 5. 检查系统服务状态 - Windows专用
-            #[cfg(windows)]
-            {
-                use std::process::Command;
-                logging!(info, Type::Service, true, "尝试检查Windows服务状态...");
-
-                let output = Command::new("sc")
-                    .args(["query", "clash_max_service"])
-                    .output();
-
-                match output {
-                    Ok(out) => {
-                        let stdout = String::from_utf8_lossy(&out.stdout);
-                        let contains_running = stdout.contains("RUNNING");
-
-                        logging!(info, Type::Service, true, "Windows服务查询结果: {}",
-                            if contains_running { "正在运行" } else { "未运行" });
-
-                        if !contains_running {
-                            logging!(info, Type::Service, true, "服务输出: {}", stdout);
-                        }
-                    }
-                    Err(e) => {
-                        logging!(error, Type::Service, true, "检查Windows服务状态失败: {}", e);
-                    }
-                }
-            }
-
-            // macOS专用
-            #[cfg(target_os = "macos")]
-            {
-                use std::process::Command;
-                logging!(info, Type::Service, true, "尝试检查macOS服务状态...");
-
-                let output = Command::new("launchctl")
-                    .args(["list", "io.github.cg3s.clash-max.service"])
-                    .output();
-
-                match output {
-                    Ok(out) => {
-                        let stdout = String::from_utf8_lossy(&out.stdout);
-                        let stderr = String::from_utf8_lossy(&out.stderr);
-
-                        if out.status.success() {
-                            logging!(info, Type::Service, true, "macOS服务正在运行");
-                            logging!(debug, Type::Service, true, "服务详情: {}", stdout);
-                        } else {
-                            logging!(warn, Type::Service, true, "macOS服务未运行");
-                            if !stderr.is_empty() {
-                                logging!(info, Type::Service, true, "错误信息: {}", stderr);
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        logging!(error, Type::Service, true, "检查macOS服务状态失败: {}", e);
-                    }
-                }
-            }
-
-            // Linux专用
-            #[cfg(target_os = "linux")]
-            {
-                use std::process::Command;
-                logging!(info, Type::Service, true, "尝试检查Linux服务状态...");
-
-                let output = Command::new("systemctl")
-                    .args(["status", "clash_max_service"])
-                    .output();
-
-                match output {
-                    Ok(out) => {
-                        let stdout = String::from_utf8_lossy(&out.stdout);
-                        let is_active = stdout.contains("Active: active (running)");
-
-                        logging!(info, Type::Service, true, "Linux服务状态: {}",
-                            if is_active { "活跃运行中" } else { "未运行" });
-
-                        if !is_active {
-                            logging!(info, Type::Service, true, "服务状态详情: {}", stdout);
-                        }
-                    }
-                    Err(e) => {
-                        logging!(error, Type::Service, true, "检查Linux服务状态失败: {}", e);
-                    }
-                }
-            }
-        }
-    }
-
-    logging!(info, Type::Service, true, "============= 服务诊断完成 =============");
-    Ok(())
-} */

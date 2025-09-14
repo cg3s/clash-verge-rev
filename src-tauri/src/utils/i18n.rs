@@ -15,14 +15,14 @@ fn get_locales_dir() -> Option<PathBuf> {
 pub fn get_supported_languages() -> Vec<String> {
     let mut languages = Vec::new();
 
-    if let Some(locales_dir) = get_locales_dir() {
-        if let Ok(entries) = fs::read_dir(locales_dir) {
-            for entry in entries.flatten() {
-                if let Some(file_name) = entry.file_name().to_str() {
-                    if let Some(lang) = file_name.strip_suffix(".json") {
-                        languages.push(lang.to_string());
-                    }
-                }
+    if let Some(locales_dir) = get_locales_dir()
+        && let Ok(entries) = fs::read_dir(locales_dir)
+    {
+        for entry in entries.flatten() {
+            if let Some(file_name) = entry.file_name().to_str()
+                && let Some(lang) = file_name.strip_suffix(".json")
+            {
+                languages.push(lang.to_string());
             }
         }
     }
@@ -39,10 +39,10 @@ static TRANSLATIONS: Lazy<HashMap<String, Value>> = Lazy::new(|| {
     if let Some(locales_dir) = get_locales_dir() {
         for lang in get_supported_languages() {
             let file_path = locales_dir.join(format!("{lang}.json"));
-            if let Ok(content) = fs::read_to_string(file_path) {
-                if let Ok(json) = serde_json::from_str(&content) {
-                    translations.insert(lang.to_string(), json);
-                }
+            if let Ok(content) = fs::read_to_string(file_path)
+                && let Ok(json) = serde_json::from_str(&content)
+            {
+                translations.insert(lang.to_string(), json);
             }
         }
     }
@@ -57,8 +57,11 @@ fn get_system_language() -> String {
         .unwrap_or_else(|| DEFAULT_LANGUAGE.to_string())
 }
 
-pub fn t(key: &str) -> String {
+pub async fn t(key: &str) -> String {
+    let key = key.to_string(); // own the string
+
     let current_lang = Config::verge()
+        .await
         .latest_ref()
         .language
         .as_deref()
@@ -67,21 +70,20 @@ pub fn t(key: &str) -> String {
 
     if let Some(text) = TRANSLATIONS
         .get(&current_lang)
-        .and_then(|trans| trans.get(key))
+        .and_then(|trans| trans.get(&key))
         .and_then(|val| val.as_str())
     {
         return text.to_string();
     }
 
-    if current_lang != DEFAULT_LANGUAGE {
-        if let Some(text) = TRANSLATIONS
+    if current_lang != DEFAULT_LANGUAGE
+        && let Some(text) = TRANSLATIONS
             .get(DEFAULT_LANGUAGE)
-            .and_then(|trans| trans.get(key))
+            .and_then(|trans| trans.get(&key))
             .and_then(|val| val.as_str())
-        {
-            return text.to_string();
-        }
+    {
+        return text.to_string();
     }
 
-    key.to_string()
+    key
 }

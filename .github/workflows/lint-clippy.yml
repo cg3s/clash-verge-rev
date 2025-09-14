@@ -2,6 +2,7 @@ name: Clippy Lint
 
 on:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   clippy:
@@ -32,6 +33,8 @@ jobs:
         with:
           workspaces: src-tauri
           save-if: false
+          cache-all-crates: false
+          shared-key: autobuild-shared
 
       - name: Install dependencies (ubuntu only)
         if: matrix.os == 'ubuntu-22.04'
@@ -39,21 +42,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libxslt1.1 libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
 
-      - name: Install Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
           run_install: false
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
 
       - name: Pnpm install and check
         run: |
           pnpm i
           pnpm run prebuild ${{ matrix.target }}
 
+      # This workflow runs linting using cargo clippy.
+      # Note: If the web build step is skipped,
+      # cargo clippy will fail to run due to missing web dist in the Tauri environment.
       - name: Build Web Assets
         run: pnpm run web:build
         env:

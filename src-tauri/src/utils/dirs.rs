@@ -151,20 +151,24 @@ pub fn find_target_icons(target: &str) -> Result<Option<String>> {
         let entry = entry?;
         let path = entry.path();
 
-        if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
-            if file_name.starts_with(target)
-                && (file_name.ends_with(".ico") || file_name.ends_with(".png"))
-            {
-                matching_files.push(path);
-            }
+        if let Some(file_name) = path.file_name().and_then(|n| n.to_str())
+            && file_name.starts_with(target)
+            && (file_name.ends_with(".ico") || file_name.ends_with(".png"))
+        {
+            matching_files.push(path);
         }
     }
 
     if matching_files.is_empty() {
         Ok(None)
     } else {
-        let first = path_to_str(matching_files.first().unwrap())?;
-        Ok(Some(first.to_string()))
+        match matching_files.first() {
+            Some(first_path) => {
+                let first = path_to_str(first_path)?;
+                Ok(Some(first.to_string()))
+            }
+            None => Ok(None),
+        }
     }
 }
 
@@ -241,4 +245,40 @@ pub fn get_encryption_key() -> Result<Vec<u8>> {
             .map_err(|e| anyhow::anyhow!("Failed to save encryption key: {}", e))?;
         Ok(key)
     }
+}
+
+#[cfg(unix)]
+pub fn ensure_mihomo_safe_dir() -> Option<PathBuf> {
+    ["/var/tmp", "/tmp"]
+        .iter()
+        .map(PathBuf::from)
+        .find(|path| path.exists())
+        .or_else(|| {
+            std::env::var_os("HOME").and_then(|home| {
+                let home_config = PathBuf::from(home).join(".config");
+                if home_config.exists() || fs::create_dir_all(&home_config).is_ok() {
+                    Some(home_config)
+                } else {
+                    log::error!(target: "app", "Failed to create safe directory: {home_config:?}");
+                    None
+                }
+            })
+        })
+}
+
+#[cfg(unix)]
+pub fn ipc_path() -> Result<PathBuf> {
+    ensure_mihomo_safe_dir()
+        .map(|base_dir| base_dir.join("max").join("max-mihomo.sock"))
+        .or_else(|| {
+            app_home_dir()
+                .ok()
+                .map(|dir| dir.join("max").join("max-mihomo.sock"))
+        })
+        .ok_or_else(|| anyhow::anyhow!("Failed to determine ipc path"))
+}
+
+#[cfg(target_os = "windows")]
+pub fn ipc_path() -> Result<PathBuf> {
+    Ok(PathBuf::from(r"\\.\pipe\max-mihomo"))
 }

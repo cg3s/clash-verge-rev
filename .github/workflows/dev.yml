@@ -13,14 +13,16 @@ on:
         required: false
         type: boolean
         default: true
-      run_macos_x86_64:
-        description: "运行 macOS x86_64"
+      run_windows_arm64:
+        description: "运行 Windows ARM64"
         required: false
         type: boolean
         default: true
 
 permissions: write-all
 env:
+  TAG_NAME: deploytest
+  TAG_CHANNEL: DeployTest
   CARGO_INCREMENTAL: 0
   RUST_BACKTRACE: short
 concurrency:
@@ -43,14 +45,18 @@ jobs:
             bundle: dmg
             id: macos-aarch64
             input: run_macos_aarch64
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            bundle: dmg
-            id: macos-x86_64
-            input: run_macos_x86_64
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            bundle: nsis
+            id: windows-arm64
+            input: run_windows_arm64
 
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Skip job if not selected
+        if: github.event.inputs[matrix.input] != 'true'
+        run: echo "Job ${{ matrix.id }} skipped as requested"
+
       - name: Checkout Repository
         if: github.event.inputs[matrix.input] == 'true'
         uses: actions/checkout@v4
@@ -69,12 +75,8 @@ jobs:
         with:
           workspaces: src-tauri
           save-if: false
-
-      - name: Install Node
-        if: github.event.inputs[matrix.input] == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
+          cache-all-crates: true
+          shared-key: autobuild-shared
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
@@ -82,11 +84,22 @@ jobs:
         with:
           run_install: false
 
+      - name: Install Node
+        if: github.event.inputs[matrix.input] == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
       - name: Pnpm install and check
         if: github.event.inputs[matrix.input] == 'true'
         run: |
           pnpm i
           pnpm run prebuild ${{ matrix.target }}
+
+      - name: Release ${{ env.TAG_CHANNEL }} Version
+        if: github.event.inputs[matrix.input] == 'true'
+        run: pnpm release-version ${{ env.TAG_NAME }}
 
       - name: Tauri build
         if: github.event.inputs[matrix.input] == 'true'

@@ -1,16 +1,9 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { useLockFn } from "ahooks";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
-import {
-  getConnections,
-  providerHealthCheck,
-  updateProxy,
-  deleteConnection,
-  getGroupProxyDelays,
-} from "@/services/api";
-import { forceRefreshProxies } from "@/services/cmds";
-import { useProfiles } from "@/hooks/use-profiles";
+import { providerHealthCheck, getGroupProxyDelays } from "@/services/cmds";
 import { useVerge } from "@/hooks/use-verge";
+import { useProxySelection } from "@/hooks/use-proxy-selection";
 import { BaseEmpty } from "../base";
 import { useRenderList } from "./use-render-list";
 import { ProxyRender } from "./proxy-render";
@@ -203,7 +196,17 @@ export const ProxyGroups = (props: Props) => {
   const { renderList, onProxies, onHeadState } = useRenderList(mode);
 
   const { verge } = useVerge();
-  const { current, patchCurrent } = useProfiles();
+
+  // 统代理选择
+  const { handleProxyGroupChange } = useProxySelection({
+    onSuccess: () => {
+      onProxies();
+    },
+    onError: (error) => {
+      console.error("代理切换失败", error);
+      onProxies();
+    },
+  });
 
   // 获取自动滚动开关状态，默认为 true
   const enableAutoScroll = verge?.enable_hover_jump_navigator ?? true;
@@ -335,44 +338,13 @@ export const ProxyGroups = (props: Props) => {
     [letterIndexMap],
   );
 
-  // 切换分组的节点代理
-  const handleChangeProxy = useLockFn(
-    async (group: IProxyGroupItem, proxy: IProxyItem) => {
+  const handleChangeProxy = useCallback(
+    (group: IProxyGroupItem, proxy: IProxyItem) => {
       if (!["Selector", "URLTest", "Fallback"].includes(group.type)) return;
 
-      const { name, now } = group;
-      await updateProxy(name, proxy.name);
-
-      await forceRefreshProxies();
-
-      onProxies();
-
-      // 断开连接
-      if (verge?.auto_close_connection) {
-        getConnections().then(({ connections }) => {
-          connections.forEach((conn) => {
-            if (conn.chains.includes(now!)) {
-              deleteConnection(conn.id);
-            }
-          });
-        });
-      }
-
-      // 保存到selected中
-      if (!current) return;
-      if (!current.selected) current.selected = [];
-
-      const index = current.selected.findIndex(
-        (item) => item.name === group.name,
-      );
-
-      if (index < 0) {
-        current.selected.push({ name, now: proxy.name });
-      } else {
-        current.selected[index] = { name, now: proxy.name };
-      }
-      await patchCurrent({ selected: current.selected });
+      handleProxyGroupChange(group, proxy);
     },
+    [handleProxyGroupChange],
   );
 
   // 测全部延迟
@@ -592,17 +564,5 @@ function throttle<T extends (...args: any[]) => any>(
         func(...args);
       }, remaining);
     }
-  };
-}
-
-// 保留防抖函数以兼容其他地方可能的使用
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number,
-): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-  return (...args: Parameters<T>) => {
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
   };
 }

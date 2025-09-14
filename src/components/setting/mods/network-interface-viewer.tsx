@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BaseDialog, DialogRef } from "@/components/base";
 import { getNetworkInterfacesInfo } from "@/services/cmds";
@@ -50,6 +50,7 @@ export const NetworkInterfaceViewer = forwardRef<DialogRef>((props, ref) => {
       contentSx={{ width: 450 }}
       disableOk
       cancelBtn={t("Close")}
+      onClose={() => setOpen(false)}
       onCancel={() => setOpen(false)}
     >
       {networkInterfaces.map((item) => (

@@ -124,7 +124,7 @@ export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
               size="small"
               onClick={() => {
                 openUrl(
-                  `https://github.com/cg3s/clash-max/releases/tag/v${updateInfo?.version}`,
+                  `https://github.com/cg3s/clash-verge-rev/releases/tag/v${updateInfo?.version}`,
                 );
               }}
             >
@@ -143,7 +143,7 @@ export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
       <Box sx={{ height: "calc(100% - 10px)", overflow: "auto" }}>
         <ReactMarkdown
           components={{
-            a: ({ node, ...props }) => {
+            a: ({ ...props }) => {
               const { children } = props;
               return (
                 <a {...props} target="_blank">

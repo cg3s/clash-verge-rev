@@ -523,7 +523,7 @@ FunctionEnd
     ${If} $0 == 0
       Push $0
       ${If} $1 == 0
-            DetailPrint "Restart Clash Max Service..."
+            DetailPrint "Restart ${PRODUCTNAME} Service..."
             SimpleSC::StartService "clash_max_service" "" 30
       ${EndIf}
     ${ElseIf} $0 != 0
@@ -549,20 +549,20 @@ FunctionEnd
     ${If} $0 == 0
       Push $0
       ${If} $1 == 1
-        DetailPrint "Stop Clash Max Service..."
+        DetailPrint "Stop ${PRODUCTNAME} Service..."
         SimpleSC::StopService "clash_max_service" 1 30
         Pop $0 ; returns an errorcode (<>0) otherwise success (0)
         ${If} $0 == 0
-              DetailPrint "Removing Clash Max Service..."
+              DetailPrint "Removing ${PRODUCTNAME} Service..."
               SimpleSC::RemoveService "clash_max_service"
         ${ElseIf} $0 != 0
                   Push $0
                   SimpleSC::GetErrorMessage
                   Pop $0
-                  MessageBox MB_OK|MB_ICONSTOP "Clash Max Service Stop Error ($0)"
+                  MessageBox MB_OK|MB_ICONSTOP "${PRODUCTNAME} Service Stop Error ($0)"
         ${EndIf}
   ${ElseIf} $1 == 0
-        DetailPrint "Removing Clash Max Service..."
+        DetailPrint "Removing ${PRODUCTNAME} Service..."
         SimpleSC::RemoveService "clash_max_service"
   ${EndIf}
     ${ElseIf} $0 != 0
@@ -661,7 +661,7 @@ SectionEnd
   Pop $R0
   ${If} $R0 = 0
       IfSilent kill 0
-      ${IfThen} $PassiveMode != 1 ${|} MessageBox MB_OKCANCEL "$(appRunningOkKill)" IDOK kill IDCANCEL cancel ${|}
+      ${IfThen} $PassiveMode != 1 ${|} MessageBox MB_OKCANCEL "${PRODUCTNAME} 正在运行 $\n点击确定以终止运行" IDOK kill IDCANCEL cancel ${|}
       kill:
         !if "${INSTALLMODE}" == "currentUser"
           nsis_tauri_utils::KillProcessCurrentUser "${MAINBINARYNAME}.exe"
@@ -762,8 +762,18 @@ Section Install
   !insertmacro CheckIfAppIsRunning
   !insertmacro CheckAllMaxProcesses
 
+  ; 修复系统级启动文件夹
+  CreateDirectory "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup"
+  DetailPrint "系统级启动文件夹已确保存在"
+
+  ; 修复用户级启动文件夹
+  SetShellVarContext current
+  StrCpy $0 "$SMPROGRAMS\Startup"
+  CreateDirectory "$0"
+  DetailPrint "已确保用户级启动文件夹存在: $0"
+
   ; 删除 window-state.json 文件 .window-state.json 文件
-  DetailPrint "开始删除删除 window-state.json or .window-state.json"
+  DetailPrint "开始删除 window-state.json or .window-state.json"
   SetShellVarContext current
   Delete "$APPDATA\cg3s.clash-max\window-state.json"
   Delete "$APPDATA\cg3s.clash-max\.window-state.json"
@@ -774,13 +784,13 @@ Section Install
   StrCpy $R1 "Software\Microsoft\Windows\CurrentVersion\Run"
 
   SetRegView 64
-  ; 清理旧版本的注册表项 (Clash Verge)
-  ReadRegStr $R2 HKCU "$R1" "Clash Verge"
+  ; 清理旧版本的注册表项 (Clash Max)
+  ReadRegStr $R2 HKCU "$R1" "Clash Max"
   ${If} $R2 != ""
     DeleteRegValue HKCU "$R1" "Clash Max"
   ${EndIf}
 
-  ReadRegStr $R2 HKLM "$R1" "Clash Verge"
+  ReadRegStr $R2 HKLM "$R1" "Clash Max"
   ${If} $R2 != ""
     DeleteRegValue HKLM "$R1" "Clash Max"
   ${EndIf}
@@ -924,7 +934,7 @@ Section Uninstall
   !insertmacro RemoveMaxService
 
   ; 删除 window-state.json 文件 .window-state.json 文件
-  DetailPrint "开始删除删除 window-state.json or .window-state.json"
+  DetailPrint "开始删除 window-state.json or .window-state.json"
   SetShellVarContext current
   Delete "$APPDATA\cg3s.clash-max\window-state.json"
   Delete "$APPDATA\cg3s.clash-max\.window-state.json"
@@ -991,7 +1001,7 @@ Section Uninstall
   !insertmacro UnpinShortcut "$DESKTOP\${MAINBINARYNAME}.lnk"
 
   ; 删除所有用户的桌面快捷方式
-  DetailPrint "开始删除所有用户桌面的 Clash Verge 快捷方式..."
+  DetailPrint "开始删除所有用户桌面的 ${PRODUCTNAME} 快捷方式..."
 
   ; 删除公共桌面快捷方式
   Delete "C:\Users\Public\Desktop\Clash Max.lnk"
@@ -1019,7 +1029,7 @@ Section Uninstall
       Delete "$R4\Clash Max.lnk"
       Delete "$R4\clash-max.lnk"
 
-      DetailPrint "尝试删除用户 '$R3' 桌面的 Clash Max 快捷方式"
+      DetailPrint "尝试删除用户 '$R3' 桌面的 ${PRODUCTNAME} 快捷方式"
     ${EndIf}
 
     ; 递增循环计数器
@@ -1029,18 +1039,20 @@ Section Uninstall
 
   DetailPrint "所有用户桌面快捷方式删除完成"
 
-  ; 删除用户开始菜单文件夹
-  Delete "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
-  Delete "$SMPROGRAMS\$AppStartMenuFolder\${MAINBINARYNAME}.lnk"
-  RMDir /r /REBOOTOK "$SMPROGRAMS\$AppStartMenuFolder"
+  ; 删除用户级开始菜单中的应用程序文件夹和快捷方式
+  DetailPrint "删除用户级开始菜单中的应用程序文件夹和快捷方式..."
+  RMDir /r /REBOOTOK "$SMPROGRAMS\Clash Max"
+  RMDir /r /REBOOTOK "$SMPROGRAMS\clash-max"
+  DetailPrint "删除用户级开始菜单中的应用程序文件夹和快捷方式完成"
 
-  ; 删除系统级开始菜单中的 Clash Max
-  Delete "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Max\Clash Max.lnk"
-  Delete "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Max\clash-max.lnk"
+  ; 删除系统级开始菜单中的应用程序文件夹和快捷方式
+  DetailPrint "删除系统级开始菜单中的应用程序文件夹和快捷方式..."
   RMDir /r /REBOOTOK "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clash Max"
+  RMDir /r /REBOOTOK "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\clash-max"
+  DetailPrint "删除系统级开始菜单中的应用程序文件夹和快捷方式完成"
 
   ; 删除所有带 Clash Max 或 clash-max 的注册表项
-  DetailPrint "开始清理所有 Clash Max 相关的注册表项..."
+  DetailPrint "开始清理所有 ${PRODUCTNAME} 相关的注册表项..."
 
   ; 设置注册表查看模式 (64位)
   SetRegView 64

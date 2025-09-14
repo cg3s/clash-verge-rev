@@ -1,5 +1,7 @@
+#[cfg(target_os = "windows")]
+use crate::process::AsyncHandler;
 use crate::{logging, utils::logging::Type};
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -143,7 +145,7 @@ pub async fn send_ipc_request(
 
     let request_json = serde_json::to_string(&request)?;
 
-    let result = tokio::task::spawn_blocking(move || -> Result<IpcResponse> {
+    let result = AsyncHandler::spawn_blocking(move || -> Result<IpcResponse> {
         let c_pipe_name = match CString::new(IPC_SOCKET_NAME) {
             Ok(name) => name,
             Err(e) => {

@@ -9,7 +9,7 @@ import {
   PlayCircleOutlineRounded,
   PauseCircleOutlineRounded,
 } from "@mui/icons-material";
-import { closeAllConnections } from "@/services/api";
+import { closeAllConnections } from "@/services/cmds";
 import { useConnectionSetting } from "@/services/states";
 import { BaseEmpty, BasePage } from "@/components/base";
 import { ConnectionItem } from "@/components/connection/connection-item";
@@ -37,7 +37,7 @@ const ConnectionsPage = () => {
   const { t } = useTranslation();
   const pageVisible = useVisibility();
   const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
+  const _isDark = theme.palette.mode === "dark";
   const [match, setMatch] = useState(() => (_: string) => true);
   const [curOrderOpt, setOrderOpt] = useState("Default");
 

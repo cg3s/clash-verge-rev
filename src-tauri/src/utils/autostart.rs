@@ -1,5 +1,5 @@
 #[cfg(target_os = "windows")]
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 #[cfg(target_os = "windows")]
 use log::info;
 
@@ -39,8 +39,8 @@ pub fn get_exe_path() -> Result<PathBuf> {
 pub fn create_shortcut() -> Result<()> {
     let exe_path = get_exe_path()?;
     let startup_dir = get_startup_dir()?;
-    let old_shortcut_path = startup_dir.join("Clash-Verge.lnk");
-    let new_shortcut_path = startup_dir.join("Clash Verge.lnk");
+    let old_shortcut_path = startup_dir.join("Clash-Max.lnk");
+    let new_shortcut_path = startup_dir.join("Clash Max.lnk");
 
     // 移除旧的快捷方式
     if old_shortcut_path.exists() {
@@ -87,8 +87,8 @@ pub fn create_shortcut() -> Result<()> {
 #[cfg(target_os = "windows")]
 pub fn remove_shortcut() -> Result<()> {
     let startup_dir = get_startup_dir()?;
-    let old_shortcut_path = startup_dir.join("Clash-Verge.lnk");
-    let new_shortcut_path = startup_dir.join("Clash Verge.lnk");
+    let old_shortcut_path = startup_dir.join("Clash-Max.lnk");
+    let new_shortcut_path = startup_dir.join("Clash Max.lnk");
 
     let mut removed_any = false;
 
@@ -117,7 +117,7 @@ pub fn remove_shortcut() -> Result<()> {
 #[cfg(target_os = "windows")]
 pub fn is_shortcut_enabled() -> Result<bool> {
     let startup_dir = get_startup_dir()?;
-    let new_shortcut_path = startup_dir.join("Clash Verge.lnk");
+    let new_shortcut_path = startup_dir.join("Clash Max.lnk");
 
     Ok(new_shortcut_path.exists())
 }

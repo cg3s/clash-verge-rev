@@ -6,14 +6,13 @@ import { useTheme } from "@mui/material/styles";
 interface Props {
   title?: React.ReactNode; // the page title
   header?: React.ReactNode; // something behind title
-  footer?: React.ReactNode; // the page footer
   contentStyle?: React.CSSProperties;
   children?: ReactNode;
   full?: boolean;
 }
 
 export const BasePage: React.FC<Props> = (props) => {
-  const { title, header, footer, contentStyle, full, children } = props;
+  const { title, header, contentStyle, full, children } = props;
   const theme = useTheme();
 
   const isDark = theme.palette.mode === "dark";
@@ -46,9 +45,6 @@ export const BasePage: React.FC<Props> = (props) => {
             </div>
           </section>
         </div>
-        <footer>
-          {footer}
-        </footer>
       </div>
     </BaseErrorBoundary>
   );

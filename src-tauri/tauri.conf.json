@@ -1,5 +1,5 @@
 {
-  "version": "2.3.2",
+  "version": "2.4.3",
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "bundle": {
     "active": true,
@@ -31,12 +31,9 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDYyMzMwRTExQ0M1RTNGRkEKUldUNlAxN01FUTR6WWh0R244SnFId2tSYVBnbzIyRlI4bXNqblJwU3ErSjQ4bW5YOTBmaFVBZ0YK",
       "endpoints": [
-        "https://download.cgsss.com/https://github.com/cg3s/clash-max/releases/download/updater/update-proxy.json",
+        "https://download.cg3s.dev/https://github.com/cg3s/clash-max/releases/download/updater/update-proxy.json",
         "https://gh-proxy.com/https://github.com/cg3s/clash-max/releases/download/updater/update-proxy.json",
-        "https://github.com/cg3s/clash-max/releases/download/updater/update.json",
-        "https://download.cgsss.com/https://github.com/cg3s/clash-max/releases/download/updater-alpha/update-alpha-proxy.json",
-        "https://gh-proxy.com/https://github.com/cg3s/clash-max/releases/download/updater-alpha/update-alpha-proxy.json",
-        "https://github.com/cg3s/clash-max/releases/download/updater-alpha/update-alpha.json"
+        "https://github.com/cg3s/clash-max/releases/download/updater/update.json"
       ],
       "windows": {
         "installMode": "basicUi"

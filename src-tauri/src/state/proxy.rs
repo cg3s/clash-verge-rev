@@ -1,24 +1,26 @@
+// use crate::utils::logging::Type;
+// use crate::{logging, singleton};
+use crate::singleton;
+use dashmap::DashMap;
+use serde_json::Value;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
+use tokio::sync::OnceCell;
+
 pub struct CacheEntry {
     pub value: Arc<Value>,
     pub expires_at: Instant,
 }
-use dashmap::DashMap;
-use serde_json::Value;
-use std::sync::Arc;
-use tokio::sync::OnceCell;
 
 pub struct ProxyRequestCache {
-    pub map: DashMap<String, Arc<OnceCell<CacheEntry>>>,
+    pub map: DashMap<String, Arc<OnceCell<Box<CacheEntry>>>>,
 }
 
 impl ProxyRequestCache {
-    pub fn global() -> &'static Self {
-        static INSTANCE: once_cell::sync::OnceCell<ProxyRequestCache> =
-            once_cell::sync::OnceCell::new();
-        INSTANCE.get_or_init(|| ProxyRequestCache {
+    fn new() -> Self {
+        ProxyRequestCache {
             map: DashMap::new(),
-        })
+        }
     }
 
     pub fn make_key(prefix: &str, id: &str) -> String {
@@ -27,39 +29,74 @@ impl ProxyRequestCache {
 
     pub async fn get_or_fetch<F, Fut>(&self, key: String, ttl: Duration, fetch_fn: F) -> Arc<Value>
     where
-        F: Fn() -> Fut,
-        Fut: std::future::Future<Output = Value>,
+        F: Fn() -> Fut + Send + 'static,
+        Fut: std::future::Future<Output = Value> + Send + 'static,
     {
-        let now = Instant::now();
-        let key_cloned = key.clone();
-        let cell = self
-            .map
-            .entry(key)
-            .or_insert_with(|| Arc::new(OnceCell::new()))
-            .clone();
+        loop {
+            let now = Instant::now();
+            let key_cloned = key.clone();
 
-        if let Some(entry) = cell.get() {
-            if entry.expires_at > now {
-                return Arc::clone(&entry.value);
-            }
-        }
+            // Get or create the cell
+            let cell = self
+                .map
+                .entry(key_cloned.clone())
+                .or_insert_with(|| Arc::new(OnceCell::new()))
+                .clone();
 
-        if let Some(entry) = cell.get() {
-            if entry.expires_at <= now {
+            // Check if we have a valid cached entry
+            if let Some(entry) = cell.get() {
+                if entry.expires_at > now {
+                    return Arc::clone(&entry.value);
+                }
+                // Entry is expired, remove it
                 self.map
                     .remove_if(&key_cloned, |_, v| Arc::ptr_eq(v, &cell));
-                let new_cell = Arc::new(OnceCell::new());
-                self.map.insert(key_cloned.clone(), new_cell.clone());
-                return Box::pin(self.get_or_fetch(key_cloned, ttl, fetch_fn)).await;
+                continue; // Retry with fresh cell
+            }
+
+            // Try to set a new value
+            let value = fetch_fn().await;
+            let entry = Box::new(CacheEntry {
+                value: Arc::new(value),
+                expires_at: Instant::now() + ttl,
+            });
+
+            match cell.set(entry) {
+                Ok(_) => {
+                    // Successfully set the value, it must exist now
+                    if let Some(set_entry) = cell.get() {
+                        return Arc::clone(&set_entry.value);
+                    }
+                }
+                Err(_) => {
+                    if let Some(existing_entry) = cell.get() {
+                        if existing_entry.expires_at > Instant::now() {
+                            return Arc::clone(&existing_entry.value);
+                        }
+                        self.map
+                            .remove_if(&key_cloned, |_, v| Arc::ptr_eq(v, &cell));
+                    }
+                }
             }
         }
+    }
 
-        let value = fetch_fn().await;
-        let entry = CacheEntry {
-            value: Arc::new(value),
-            expires_at: Instant::now() + ttl,
-        };
-        let _ = cell.set(entry);
-        Arc::clone(&cell.get().unwrap().value)
+    // TODO
+    pub fn clean_default_keys(&self) {
+        // logging!(info, Type::Cache, "Cleaning proxies keys");
+        // let proxies_key = Self::make_key("proxies", "default");
+        // self.map.remove(&proxies_key);
+
+        // logging!(info, Type::Cache, "Cleaning providers keys");
+        // let providers_key = Self::make_key("providers", "default");
+        // self.map.remove(&providers_key);
+
+        // !The frontend goes crash if we clean the clash_config cache
+        // logging!(info, Type::Cache, "Cleaning clash config keys");
+        // let clash_config_key = Self::make_key("clash_config", "default");
+        // self.map.remove(&clash_config_key);
     }
 }
+
+// Use singleton macro
+singleton!(ProxyRequestCache, INSTANCE);
